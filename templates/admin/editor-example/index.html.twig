@@ -1,0 +1,164 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Exemples d'Utilisation - Custom Editor{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="bi bi-code-square me-2"></i>Exemples d'Utilisation de l'Éditeur
+    </h1>
+    <a href="{{ path('admin_editor_demo_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Retour aux démonstrations
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>Exemples Pratiques d'Intégration
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Ces exemples montrent comment intégrer l'éditeur de texte dans vos formulaires Symfony réels.
+                </p>
+                
+                <div class="row g-4">
+                    <!-- Article Form Example -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-newspaper me-2"></i>Formulaire d'Article Complet
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Exemple complet d'un formulaire d'article de blog utilisant toutes les fonctionnalités de l'éditeur.
+                                </p>
+                                <ul class="list-unstyled mb-3">
+                                    <li><i class="bi bi-check text-success me-2"></i>Éditeur avec médias</li>
+                                    <li><i class="bi bi-check text-success me-2"></i>Sélecteur d'images</li>
+                                    <li><i class="bi bi-check text-success me-2"></i>Sauvegarde automatique</li>
+                                    <li><i class="bi bi-check text-success me-2"></i>Galerie de médias</li>
+                                </ul>
+                                <a href="{{ path('admin_editor_example_article_form') }}" class="btn btn-success">
+                                    <i class="bi bi-play-fill me-2"></i>Voir l'exemple
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Test -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-lightning me-2"></i>Test Rapide
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Interface simple pour tester rapidement l'éditeur avec toutes ses fonctionnalités.
+                                </p>
+                                <ul class="list-unstyled mb-3">
+                                    <li><i class="bi bi-check text-info me-2"></i>Interface simplifiée</li>
+                                    <li><i class="bi bi-check text-info me-2"></i>Test immédiat</li>
+                                    <li><i class="bi bi-check text-info me-2"></i>Sauvegarde auto 10s</li>
+                                    <li><i class="bi bi-check text-info me-2"></i>Statistiques instantanées</li>
+                                </ul>
+                                <a href="{{ path('admin_editor_example_quick_test') }}" class="btn btn-info">
+                                    <i class="bi bi-play-fill me-2"></i>Test rapide
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="row">
+                    <div class="col-12">
+                        <h4 class="mb-3">
+                            <i class="bi bi-code me-2"></i>Code d'Exemple - FormType
+                        </h4>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <pre><code class="language-php">// Dans votre FormType
+use App\Form\Type\MediaTextareaType;
+use App\Form\Type\MediaSelectorType;
+
+$builder
+    // Éditeur avec médias
+    ->add('content', MediaTextareaType::class, [
+        'label' => 'Contenu',
+        'enable_media' => true,
+        'enable_editor' => true,
+        'editor_height' => 500,
+        'attr' => [
+            'data-enable-auto-save' => 'true',
+            'data-auto-save-interval' => '30000'
+        ]
+    ])
+    
+    // Sélecteur d'image unique
+    ->add('featuredImage', MediaSelectorType::class, [
+        'label' => 'Image de couverture',
+        'multiple' => false,
+        'show_preview' => true
+    ])
+    
+    // Galerie d'images
+    ->add('gallery', MediaSelectorType::class, [
+        'label' => 'Galerie',
+        'multiple' => true,
+        'show_preview' => true
+    ]);</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4 class="mb-3">
+                            <i class="bi bi-gear me-2"></i>Configuration JavaScript
+                        </h4>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <pre><code class="language-javascript">// Initialisation manuelle avec options avancées
+$('#mon-textarea').customEditor({
+    height: 400,
+    enableMedia: true,
+    enableAutoSave: true,
+    autoSaveInterval: 30000,
+    enableImageResize: true,    // Nouveau v2.0
+    enableDragDrop: true,       // Nouveau v2.0
+    onAutoSave: function(content) {
+        $.post('/api/auto-save', {content: content});
+    },
+    onImageResize: function(img, width, height) {
+        console.log('Image redimensionnée:', width, height);
+    }
+});</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle me-2"></i>Information
+                    </h6>
+                    <p class="mb-0">
+                        Ces exemples utilisent des données factices. Dans un projet réel, vous 
+                        intégreriez ces FormTypes avec vos entités Doctrine existantes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

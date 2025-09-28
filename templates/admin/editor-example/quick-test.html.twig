@@ -1,0 +1,334 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Test Rapide - Custom Editor{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">
+        <i class="bi bi-lightning me-2"></i>Test Rapide de l'Éditeur
+    </h1>
+    <a href="{{ path('admin_editor_example_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Retour aux exemples
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>Interface de Test
+                </h3>
+                <small class="text-muted">
+                    Testez toutes les fonctionnalités de l'éditeur rapidement
+                </small>
+            </div>
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                
+                <div class="mb-3">
+                    {{ form_label(form.quickContent, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                    <div class="alert alert-info mb-3">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="bi bi-magic me-2"></i>Fonctionnalités disponibles :
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Formatage de texte (gras, italique, souligné)</li>
+                                    <li>Titres hiérarchiques (H1, H2, H3)</li>
+                                    <li>Listes à puces et numérotées</li>
+                                    <li>Insertion d'images et médias</li>
+                                    <li>Redimensionnement d'images (nouveau v2.0)</li>
+                                    <li>Liens et citations</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="bi bi-keyboard me-2"></i>Raccourcis :
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li><kbd>Ctrl+S</kbd> Sauvegarder</li>
+                                    <li><kbd>Ctrl+Shift+F</kbd> Plein écran</li>
+                                    <li><kbd>Ctrl+Shift+U</kbd> Mode source</li>
+                                    <li><kbd>Tab</kbd> Indentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {{ form_widget(form.quickContent) }}
+                    {{ form_errors(form.quickContent) }}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    {{ form_widget(form.save, {'attr': {'class': 'btn btn-primary btn-lg'}}) }}
+                    
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-outline-info" id="getContentBtn">
+                            <i class="bi bi-code me-2"></i>Voir le HTML
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="clearContentBtn">
+                            <i class="bi bi-trash me-2"></i>Vider
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="insertSampleBtn">
+                            <i class="bi bi-file-text me-2"></i>Contenu d'exemple
+                        </button>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Statistiques en temps réel -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Statistiques
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1" id="characterCount">0</h4>
+                            <small class="text-muted">Caractères</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1" id="wordCount">0</h4>
+                        <small class="text-muted">Mots</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-warning mb-1" id="paragraphCount">0</h5>
+                            <small class="text-muted">Paragraphes</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-info mb-1" id="imageCount">0</h5>
+                        <small class="text-muted">Images</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dernière sauvegarde -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-clock me-2"></i>Sauvegarde Automatique
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="autoSaveStatus" class="text-center">
+                    <i class="bi bi-circle text-secondary me-2"></i>
+                    <span class="text-muted">Sauvegarde toutes les 10 secondes</span>
+                </div>
+                <div id="lastSaveTime" class="text-center mt-2 small text-muted">
+                    Aucune sauvegarde encore
+                </div>
+            </div>
+        </div>
+
+        <!-- Conseils d'utilisation -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>Conseils
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="bi bi-arrow-right text-primary me-2"></i>
+                        Cliquez sur une image pour la redimensionner
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-arrow-right text-primary me-2"></i>
+                        Glissez-déposez des fichiers directement
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-arrow-right text-primary me-2"></i>
+                        Utilisez le mode plein écran pour plus de confort
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-arrow-right text-primary me-2"></i>
+                        Le mode source vous permet d'éditer le HTML
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour afficher le HTML -->
+<div class="modal fade" id="htmlModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-code me-2"></i>Code HTML généré
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre><code id="htmlContent" class="language-html"></code></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="copyHtmlBtn">
+                    <i class="bi bi-clipboard me-2"></i>Copier
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+$(document).ready(function() {
+    // Obtenir l'instance de l'éditeur
+    const $textarea = $('#example_article_quickContent');
+    let editor = null;
+    
+    // Attendre que l'éditeur soit initialisé
+    setTimeout(() => {
+        editor = $textarea.data('customEditor');
+        if (editor) {
+            setupEditorEvents();
+        }
+    }, 1000);
+
+    function setupEditorEvents() {
+        // Mise à jour des statistiques en temps réel
+        editor.options.onChange = function(content) {
+            updateStatistics(content);
+        };
+
+        // Personnaliser la sauvegarde automatique
+        editor.options.onAutoSave = function(content) {
+            $.ajax({
+                url: '{{ path('admin_editor_example_auto_save') }}',
+                method: 'POST',
+                data: JSON.stringify({
+                    content: content,
+                    timestamp: new Date().toISOString()
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        updateAutoSaveStatus('success', response.timestamp);
+                    }
+                },
+                error: function() {
+                    updateAutoSaveStatus('error');
+                }
+            });
+        };
+
+        // Mise à jour initiale des statistiques
+        updateStatistics(editor.getContent());
+    }
+
+    // Boutons d'action
+    $('#getContentBtn').on('click', function() {
+        if (editor) {
+            const content = editor.getContent();
+            $('#htmlContent').text(content);
+            $('#htmlModal').modal('show');
+        }
+    });
+
+    $('#clearContentBtn').on('click', function() {
+        if (editor && confirm('Êtes-vous sûr de vouloir vider le contenu ?')) {
+            editor.setContent('');
+        }
+    });
+
+    $('#insertSampleBtn').on('click', function() {
+        if (editor) {
+            const sampleContent = `
+                <h1>Titre Principal</h1>
+                <p>Ceci est un exemple de contenu avec du <strong>texte en gras</strong> et du <em>texte en italique</em>.</p>
+                
+                <h2>Sous-titre</h2>
+                <p>Voici une liste à puces :</p>
+                <ul>
+                    <li>Premier élément</li>
+                    <li>Deuxième élément avec <u>texte souligné</u></li>
+                    <li>Troisième élément</li>
+                </ul>
+                
+                <h3>Citation et Code</h3>
+                <blockquote>
+                    <p>Voici un exemple de citation. L'éditeur supporte de nombreux formats.</p>
+                </blockquote>
+                
+                <p>Et voici un exemple de code :</p>
+                <pre><code>function exemple() {
+    console.log("Hello World!");
+}</code></pre>
+                
+                <p>N'hésitez pas à <a href="#">ajouter des liens</a> et des images via le gestionnaire de médias.</p>
+            `;
+            editor.setContent(sampleContent);
+        }
+    });
+
+    $('#copyHtmlBtn').on('click', function() {
+        const content = $('#htmlContent').text();
+        navigator.clipboard.writeText(content).then(function() {
+            $(this).html('<i class="bi bi-check me-2"></i>Copié !');
+            setTimeout(() => {
+                $('#copyHtmlBtn').html('<i class="bi bi-clipboard me-2"></i>Copier');
+            }, 2000);
+        });
+    });
+
+    function updateStatistics(content) {
+        const textContent = $(content).text() || '';
+        const characterCount = content.length;
+        const wordCount = textContent.trim() ? textContent.trim().split(/\s+/).length : 0;
+        const paragraphCount = (content.match(/<p[^>]*>/g) || []).length;
+        const imageCount = (content.match(/<img[^>]*>/g) || []).length;
+
+        $('#characterCount').text(characterCount.toLocaleString());
+        $('#wordCount').text(wordCount.toLocaleString());
+        $('#paragraphCount').text(paragraphCount);
+        $('#imageCount').text(imageCount);
+    }
+
+    function updateAutoSaveStatus(status, timestamp = null) {
+        const $status = $('#autoSaveStatus');
+        const $time = $('#lastSaveTime');
+
+        if (status === 'success') {
+            $status.html('<i class="bi bi-check-circle text-success me-2"></i><span class="text-success">Sauvegardé automatiquement</span>');
+            
+            if (timestamp) {
+                const date = new Date(timestamp);
+                $time.text('Dernière sauvegarde : ' + date.toLocaleTimeString());
+            }
+            
+            // Revenir à l'état normal après 3 secondes
+            setTimeout(() => {
+                $status.html('<i class="bi bi-circle text-secondary me-2"></i><span class="text-muted">Sauvegarde toutes les 10 secondes</span>');
+            }, 3000);
+        } else if (status === 'error') {
+            $status.html('<i class="bi bi-exclamation-triangle text-danger me-2"></i><span class="text-danger">Erreur de sauvegarde</span>');
+            
+            setTimeout(() => {
+                $status.html('<i class="bi bi-circle text-secondary me-2"></i><span class="text-muted">Sauvegarde toutes les 10 secondes</span>');
+            }, 5000);
+        }
+    }
+});
+</script>
+{% endblock %}
