@@ -237,23 +237,31 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Search products by multiple criteria
+     * Search products by multiple criteria with optimized joins
      */
     public function searchProducts(array $criteria = []): array
     {
         $qb = $this->createQueryBuilder('p')
+            ->select('p', 't', 'c', 'b', 'm') // Select related entities to avoid N+1 queries
+            ->leftJoin('p.translations', 't')
+            ->leftJoin('p.categories', 'c')
+            ->leftJoin('p.brand', 'b')
+            ->leftJoin('p.media', 'm')
             ->where('p.status = :status')
             ->setParameter('status', Product::STATUS_ACTIVE);
 
+        if (!empty($criteria['language'])) {
+            $qb->andWhere('t.language = :language OR t.language IS NULL')
+                ->setParameter('language', $criteria['language']);
+        }
+
         if (!empty($criteria['search'])) {
-            $qb->leftJoin('p.translations', 't')
-                ->andWhere('t.name LIKE :search OR t.description LIKE :search OR p.sku LIKE :search')
+            $qb->andWhere('t.name LIKE :search OR t.description LIKE :search OR p.sku LIKE :search')
                 ->setParameter('search', '%' . $criteria['search'] . '%');
         }
 
         if (!empty($criteria['category'])) {
-            $qb->innerJoin('p.categories', 'c')
-                ->andWhere('c.id = :categoryId')
+            $qb->andWhere('c.id = :categoryId')
                 ->setParameter('categoryId', $criteria['category']);
         }
 
@@ -272,6 +280,10 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('maxPrice', $criteria['max_price']);
         }
 
+        if (isset($criteria['in_stock']) && $criteria['in_stock']) {
+            $qb->andWhere('(p.trackStock = false OR p.stock > 0)');
+        }
+
         $orderBy = $criteria['sort'] ?? 'updated';
         $order = $criteria['order'] ?? 'DESC';
 
@@ -280,16 +292,78 @@ class ProductRepository extends ServiceEntityRepository
                 $qb->orderBy('p.price', $order);
                 break;
             case 'name':
-                $qb->leftJoin('p.translations', 'st')
-                    ->orderBy('st.name', $order);
+                $qb->orderBy('t.name', $order);
                 break;
             case 'created':
                 $qb->orderBy('p.createdAt', $order);
+                break;
+            case 'stock':
+                $qb->orderBy('p.stock', $order);
                 break;
             default:
                 $qb->orderBy('p.updatedAt', $order);
         }
 
+        // Apply pagination if provided
+        if (!empty($criteria['limit'])) {
+            $qb->setMaxResults($criteria['limit']);
+        }
+        if (!empty($criteria['offset'])) {
+            $qb->setFirstResult($criteria['offset']);
+        }
+
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Find products with translations for a specific language
+     */
+    public function findActiveWithTranslation(string $languageCode, int $limit = 20, int $offset = 0): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p', 't', 'b', 'm')
+            ->innerJoin('p.translations', 't')
+            ->leftJoin('p.brand', 'b')
+            ->leftJoin('p.media', 'm')
+            ->innerJoin('t.language', 'l')
+            ->where('p.status = :status')
+            ->andWhere('l.code = :languageCode')
+            ->setParameter('status', Product::STATUS_ACTIVE)
+            ->setParameter('languageCode', $languageCode)
+            ->orderBy('p.updatedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Get products statistics
+     */
+    public function getStatistics(): array
+    {
+        $qb = $this->createQueryBuilder('p');
+        
+        return [
+            'total' => $qb->select('COUNT(p.id)')
+                ->getQuery()
+                ->getSingleScalarResult(),
+            'active' => $qb->select('COUNT(p.id)')
+                ->where('p.status = :status')
+                ->setParameter('status', Product::STATUS_ACTIVE)
+                ->getQuery()
+                ->getSingleScalarResult(),
+            'draft' => $qb->select('COUNT(p.id)')
+                ->where('p.status = :status')
+                ->setParameter('status', Product::STATUS_DRAFT)
+                ->getQuery()
+                ->getSingleScalarResult(),
+            'low_stock' => $qb->select('COUNT(p.id)')
+                ->where('p.trackStock = true')
+                ->andWhere('p.lowStockThreshold IS NOT NULL')
+                ->andWhere('p.stock <= p.lowStockThreshold')
+                ->getQuery()
+                ->getSingleScalarResult()
+        ];
     }
 }

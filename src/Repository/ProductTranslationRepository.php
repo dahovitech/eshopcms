@@ -186,4 +186,58 @@ class ProductTranslationRepository extends ServiceEntityRepository
 
         return $newTranslation;
     }
+
+    /**
+     * Find translations with missing slug for SEO optimization
+     */
+    public function findTranslationsWithoutSlug(): array
+    {
+        return $this->createQueryBuilder('pt')
+            ->select('pt', 'p', 'l')
+            ->innerJoin('pt.product', 'p')
+            ->innerJoin('pt.language', 'l')
+            ->where('pt.slugTranslation IS NULL OR pt.slugTranslation = :empty')
+            ->andWhere('pt.name IS NOT NULL AND pt.name != :empty')
+            ->andWhere('p.status = :status')
+            ->setParameter('empty', '')
+            ->setParameter('status', Product::STATUS_ACTIVE)
+            ->orderBy('pt.updatedAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Get translation completion statistics for all languages
+     */
+    public function getGlobalTranslationStatistics(): array
+    {
+        $result = $this->createQueryBuilder('pt')
+            ->select('l.code as languageCode, l.name as languageName, COUNT(pt.id) as total')
+            ->innerJoin('pt.language', 'l')
+            ->groupBy('l.id')
+            ->orderBy('total', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        foreach ($result as &$stat) {
+            $completeCount = $this->countCompleteByLanguage($stat['languageCode']);
+            $stat['complete'] = $completeCount;
+            $stat['incomplete'] = $stat['total'] - $completeCount;
+            $stat['percentage'] = $stat['total'] > 0 ? round(($completeCount / $stat['total']) * 100, 1) : 0;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Find orphaned translations (products that no longer exist)
+     */
+    public function findOrphanedTranslations(): array
+    {
+        return $this->createQueryBuilder('pt')
+            ->leftJoin('pt.product', 'p')
+            ->where('p.id IS NULL')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -10,6 +10,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ProductTranslationRepository::class)]
 #[ORM\Table(name: 'product_translations')]
 #[ORM\UniqueConstraint(name: 'UNIQ_PRODUCT_LANGUAGE', columns: ['product_id', 'language_id'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_SLUG_TRANSLATION_LANGUAGE', columns: ['slug_translation', 'language_id'])]
+#[ORM\HasLifecycleCallbacks]
 class ProductTranslation
 {
     #[ORM\Id]
@@ -54,8 +56,7 @@ class ProductTranslation
     #[ORM\Column(type: 'array', nullable: true)]
     private ?array $tags = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Assert\Length(max: 255)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $specifications = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -220,6 +221,7 @@ class ProductTranslation
         return $this->updatedAt;
     }
 
+    #[ORM\PreUpdate]
     public function setUpdatedAt(): static
     {
         $this->updatedAt = new \DateTimeImmutable();
@@ -269,7 +271,26 @@ class ProductTranslation
      */
     public function getEffectiveSlug(): string
     {
-        return $this->slugTranslation ?: $this->product?->getSlug() ?: '';
+        if (!empty($this->slugTranslation)) {
+            return $this->slugTranslation;
+        }
+        
+        if ($this->product && !empty($this->product->getSlug())) {
+            return $this->product->getSlug() . '-' . $this->language?->getCode();
+        }
+        
+        return $this->name ? strtolower(str_replace(' ', '-', $this->name)) : '';
+    }
+
+    /**
+     * Auto-generate slug from name if not set
+     */
+    public function generateSlugFromName(): static
+    {
+        if (empty($this->slugTranslation) && !empty($this->name)) {
+            $this->slugTranslation = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $this->name), '-'));
+        }
+        return $this;
     }
 
     public function __toString(): string

@@ -29,13 +29,16 @@ class ProductTranslationService
         // Generate slug if not set
         if (empty($product->getSlug()) && !empty($translationsData)) {
             $defaultLang = $this->languageRepository->findDefaultLanguage();
+            if (!$defaultLang) {
+                throw new \RuntimeException('No default language found in the system.');
+            }
+            
             $defaultTranslation = $translationsData[$defaultLang->getCode()] ?? reset($translationsData);
             if (!empty($defaultTranslation['name'])) {
                 $product->setSlug($this->generateUniqueSlug($defaultTranslation['name']));
             }
         }
 
-        $product->setUpdatedAt();
         $this->entityManager->persist($product);
         
         // For new products, we need to flush first to get an ID before handling translations
@@ -44,7 +47,7 @@ class ProductTranslationService
             $this->entityManager->flush();
         }
 
-        // Handle translations
+        // Handle translations with validation
         foreach ($translationsData as $languageCode => $data) {
             $language = $this->languageRepository->findByCode($languageCode);
             if (!$language || !$language->isActive()) {
@@ -63,22 +66,38 @@ class ProductTranslationService
                 $product->addTranslation($translation);
             }
 
-            $translation->setName($data['name'] ?? '');
+            // Validate required fields
+            if (empty($data['name'])) {
+                throw new \InvalidArgumentException("Name is required for language {$languageCode}");
+            }
+
+            $translation->setName($data['name']);
             $translation->setDescription($data['description'] ?? '');
             $translation->setShortDescription($data['shortDescription'] ?? '');
-            $translation->setSlugTranslation($data['slugTranslation'] ?? null);
             $translation->setMetaTitle($data['metaTitle'] ?? null);
             $translation->setMetaDescription($data['metaDescription'] ?? null);
             $translation->setMetaKeywords($data['metaKeywords'] ?? null);
             $translation->setTags($data['tags'] ?? null);
             $translation->setSpecifications($data['specifications'] ?? null);
             $translation->setFeatures($data['features'] ?? null);
-            $translation->setUpdatedAt();
+
+            // Auto-generate slug if not provided
+            if (empty($data['slugTranslation'])) {
+                $translation->generateSlugFromName();
+            } else {
+                $translation->setSlugTranslation($data['slugTranslation']);
+            }
 
             $this->entityManager->persist($translation);
         }
 
         $this->entityManager->flush();
+
+        // Validate business rules after persistence
+        if (!$product->isValidPriceStructure()) {
+            throw new \InvalidArgumentException('Invalid price structure. Check that compareAtPrice > price and costPrice < price.');
+        }
+
         return $product;
     }
 

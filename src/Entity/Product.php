@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Table(name: 'products')]
+#[ORM\HasLifecycleCallbacks]
 class Product
 {
     public const STATUS_DRAFT = 'draft';
@@ -28,21 +29,21 @@ class Product
     #[Assert\Length(max: 100)]
     private ?string $sku = null;
 
-    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     private ?string $slug = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank]
     #[Assert\PositiveOrZero]
     private ?string $price = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero]
     private ?string $compareAtPrice = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero]
     private ?string $costPrice = null;
 
@@ -67,7 +68,7 @@ class Product
     #[ORM\Column(type: 'boolean')]
     private bool $isDigital = false;
 
-    #[ORM\Column(type: 'decimal', precision: 8, scale: 3, nullable: true)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 3, nullable: true)]
     #[Assert\PositiveOrZero]
     private ?string $weight = null;
 
@@ -303,6 +304,7 @@ class Product
         return $this->updatedAt;
     }
 
+    #[ORM\PreUpdate]
     public function setUpdatedAt(): static
     {
         $this->updatedAt = new \DateTimeImmutable();
@@ -422,12 +424,17 @@ class Product
     /**
      * Get translation with fallback
      */
-    public function getTranslationWithFallback(string $languageCode, string $fallbackLanguageCode = 'fr'): ?ProductTranslation
+    public function getTranslationWithFallback(string $languageCode, ?string $fallbackLanguageCode = null): ?ProductTranslation
     {
         $translation = $this->getTranslation($languageCode);
         
-        if (!$translation) {
+        if (!$translation && $fallbackLanguageCode) {
             $translation = $this->getTranslation($fallbackLanguageCode);
+        }
+        
+        // If still no translation, get the first available one
+        if (!$translation) {
+            $translation = $this->translations->first() ?: null;
         }
 
         return $translation;
@@ -436,7 +443,7 @@ class Product
     /**
      * Get name for a specific language with fallback
      */
-    public function getName(string $languageCode = 'fr', string $fallbackLanguageCode = 'fr'): string
+    public function getName(string $languageCode, ?string $fallbackLanguageCode = null): string
     {
         $translation = $this->getTranslationWithFallback($languageCode, $fallbackLanguageCode);
         return $translation ? $translation->getName() : 'Untitled Product';
@@ -445,19 +452,19 @@ class Product
     /**
      * Get description for a specific language with fallback
      */
-    public function getDescription(string $languageCode = 'fr', string $fallbackLanguageCode = 'fr'): string
+    public function getDescription(string $languageCode, ?string $fallbackLanguageCode = null): ?string
     {
         $translation = $this->getTranslationWithFallback($languageCode, $fallbackLanguageCode);
-        return $translation ? $translation->getDescription() : '';
+        return $translation ? $translation->getDescription() : null;
     }
 
     /**
      * Get short description for a specific language with fallback
      */
-    public function getShortDescription(string $languageCode = 'fr', string $fallbackLanguageCode = 'fr'): string
+    public function getShortDescription(string $languageCode, ?string $fallbackLanguageCode = null): ?string
     {
         $translation = $this->getTranslationWithFallback($languageCode, $fallbackLanguageCode);
-        return $translation ? $translation->getShortDescription() : '';
+        return $translation ? $translation->getShortDescription() : null;
     }
 
     /**
@@ -551,8 +558,106 @@ class Product
         ];
     }
 
+    /**
+     * Validate prices coherence
+     */
+    public function isValidPriceStructure(): bool
+    {
+        if ($this->price === null) {
+            return false;
+        }
+        
+        $priceFloat = (float) $this->price;
+        
+        if ($this->compareAtPrice !== null) {
+            $compareAtPriceFloat = (float) $this->compareAtPrice;
+            if ($compareAtPriceFloat <= $priceFloat) {
+                return false; // Compare at price should be higher than regular price
+            }
+        }
+        
+        if ($this->costPrice !== null) {
+            $costPriceFloat = (float) $this->costPrice;
+            if ($costPriceFloat >= $priceFloat) {
+                return false; // Cost price should be lower than selling price
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Get discount percentage if compare at price is set
+     */
+    public function getDiscountPercentage(): ?float
+    {
+        if ($this->compareAtPrice === null || $this->price === null) {
+            return null;
+        }
+        
+        $priceFloat = (float) $this->price;
+        $compareAtPriceFloat = (float) $this->compareAtPrice;
+        
+        if ($compareAtPriceFloat <= $priceFloat) {
+            return null;
+        }
+        
+        return round((($compareAtPriceFloat - $priceFloat) / $compareAtPriceFloat) * 100, 2);
+    }
+
+    /**
+     * Get profit margin percentage if cost price is set
+     */
+    public function getProfitMarginPercentage(): ?float
+    {
+        if ($this->costPrice === null || $this->price === null) {
+            return null;
+        }
+        
+        $priceFloat = (float) $this->price;
+        $costPriceFloat = (float) $this->costPrice;
+        
+        if ($costPriceFloat >= $priceFloat) {
+            return null;
+        }
+        
+        return round((($priceFloat - $costPriceFloat) / $priceFloat) * 100, 2);
+    }
+
+    /**
+     * Get price as float for calculations
+     */
+    public function getPriceAsFloat(): ?float
+    {
+        return $this->price ? (float) $this->price : null;
+    }
+
+    /**
+     * Get compare at price as float for calculations
+     */
+    public function getCompareAtPriceAsFloat(): ?float
+    {
+        return $this->compareAtPrice ? (float) $this->compareAtPrice : null;
+    }
+
+    /**
+     * Get cost price as float for calculations
+     */
+    public function getCostPriceAsFloat(): ?float
+    {
+        return $this->costPrice ? (float) $this->costPrice : null;
+    }
+
+    /**
+     * Get weight as float for calculations
+     */
+    public function getWeightAsFloat(): ?float
+    {
+        return $this->weight ? (float) $this->weight : null;
+    }
+
     public function __toString(): string
     {
-        return $this->getName();
+        return $this->getName('en') ?: $this->getName('fr') ?: 'Product #' . $this->id;
     }
 }
