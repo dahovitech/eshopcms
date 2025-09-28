@@ -27,11 +27,10 @@
                                 <h5 class="mb-0">Configuration du Service</h5>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="slug" class="form-label">Slug (URL)</label>
-                                    <input type="text" class="form-control" id="slug" name="slug" 
-                                           value="{{ service.slug }}" required>
-                                    <div class="form-text">URL: /service/{{ service.slug }}</div>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Slug automatique :</strong> Le slug URL est généré automatiquement à partir du titre du service.
+                                    <br><small>URL actuelle: /service/{{ service.slug }}</small>
                                 </div>
 
                                 <div class="mb-3">

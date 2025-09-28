@@ -97,13 +97,12 @@
                                           name="translations[{{ language.code }}][description]">{{ translation ? translation.description : '' }}</textarea>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="slug-{{ language.code }}" class="form-label">Slug URL</label>
-                                <input type="text" class="form-control" 
-                                       id="slug-{{ language.code }}" 
-                                       name="translations[{{ language.code }}][slug]" 
-                                       value="{{ translation ? translation.slug : '' }}">
+                            {% if language.isDefault() %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Slug automatique :</strong> Le slug URL sera généré automatiquement à partir du nom de la marque.
                             </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>

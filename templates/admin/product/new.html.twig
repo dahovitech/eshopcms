@@ -178,16 +178,14 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="slug-{{ language.code }}" class="form-label">Slug URL</label>
-                                        <input type="text" class="form-control" 
-                                               id="slug-{{ language.code }}" 
-                                               name="translations[{{ language.code }}][slug]" 
-                                               value="{{ translation ? translation.slug : '' }}">
-                                        <div class="form-text">URL conviviale pour ce produit</div>
+                                {% if language.isDefault() %}
+                                <div class="col-md-12">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Slug automatique :</strong> Le slug URL sera généré automatiquement à partir du nom du produit.
                                     </div>
                                 </div>
+                                {% endif %}
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="metaTitle-{{ language.code }}" class="form-label">Titre SEO</label>
@@ -288,31 +286,8 @@
 {{ parent() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-generate slug from name for default language
-    {% if defaultLanguage %}
-    const nameInput = document.getElementById('name-{{ defaultLanguage.code }}');
-    const slugInput = document.getElementById('slug-{{ defaultLanguage.code }}');
-    
-    if (nameInput && slugInput) {
-        nameInput.addEventListener('input', function() {
-            if (!slugInput.value || slugInput.value === slugify(nameInput.dataset.oldValue || '')) {
-                slugInput.value = slugify(this.value);
-            }
-            nameInput.dataset.oldValue = this.value;
-        });
-    }
-    {% endif %}
-    
-    function slugify(text) {
-        return text
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim('-');
-    }
+    // Slug generation is now handled automatically on the server side
+    console.log('Automatic slug generation enabled');
 });
 </script>
 {% endblock %}

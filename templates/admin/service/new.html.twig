@@ -22,12 +22,9 @@
                                 <h5 class="mb-0">Configuration du Service</h5>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="slug" class="form-label">Slug (URL)</label>
-                                    <input type="text" class="form-control" id="slug" name="slug" 
-                                           value="{{ service.slug ?? '' }}" 
-                                           placeholder="Sera généré automatiquement">
-                                    <div class="form-text">Laissez vide pour génération automatique</div>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Slug automatique :</strong> Le slug URL sera généré automatiquement à partir du titre du service.
                                 </div>
 
                                 <div class="mb-3">
@@ -163,22 +160,7 @@
 </div>
 
 <script>
-// Auto-generate slug from default language title
-const defaultTitleInput = document.getElementById('title_{{ defaultLanguage.code }}');
-const slugInput = document.getElementById('slug');
-
-if (defaultTitleInput && slugInput) {
-    defaultTitleInput.addEventListener('input', function() {
-        if (!slugInput.value) {
-            const slug = this.value
-                .toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/[\s_-]+/g, '-')
-                .replace(/^-+|-+$/g, '');
-            slugInput.value = slug;
-        }
-    });
-}
+// Slug generation is now handled automatically on the server side
 
 // Character counters for meta fields
 function addCharacterCounter(inputId, maxLength) {

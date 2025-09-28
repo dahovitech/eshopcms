@@ -7,6 +7,7 @@ use App\Entity\BrandTranslation;
 use App\Repository\LanguageRepository;
 use App\Repository\BrandRepository;
 use App\Repository\BrandTranslationRepository;
+use App\Service\BrandTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +24,7 @@ class BrandController extends AbstractController
         private BrandRepository $brandRepository,
         private LanguageRepository $languageRepository,
         private BrandTranslationRepository $brandTranslationRepository,
+        private BrandTranslationService $brandTranslationService,
         private EntityManagerInterface $entityManager
     ) {}
 
@@ -147,37 +149,9 @@ class BrandController extends AbstractController
             
             $this->entityManager->flush();
 
-            // Handle translations
-            foreach ($languages as $language) {
-                $langCode = $language->getCode();
-                if (isset($data['translations'][$langCode])) {
-                    $translationData = $data['translations'][$langCode];
-                    
-                    if (!empty($translationData['name']) || !empty($translationData['description'])) {
-                        $translation = $this->brandTranslationRepository->findOneBy([
-                            'brand' => $brand,
-                            'language' => $language
-                        ]);
-                        
-                        if (!$translation) {
-                            $translation = new BrandTranslation();
-                            $translation->setBrand($brand);
-                            $translation->setLanguage($language);
-                        }
-
-                        if (!empty($translationData['name'])) {
-                            $translation->setName($translationData['name']);
-                        }
-                        if (!empty($translationData['description'])) {
-                            $translation->setDescription($translationData['description']);
-                        }
-                        if (!empty($translationData['slug'])) {
-                            $translation->setSlug($translationData['slug']);
-                        }
-
-                        $this->entityManager->persist($translation);
-                    }
-                }
+            // Handle translations with automatic slug generation
+            if (isset($data['translations'])) {
+                $this->brandTranslationService->processTranslations($brand, $data['translations']);
             }
 
             $this->entityManager->flush();

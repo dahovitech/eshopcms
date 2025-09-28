@@ -47,6 +47,21 @@ class BrandTranslationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find translation by slug and language code (for uniqueness check)
+     */
+    public function findBySlugTranslation(string $slug, string $languageCode): ?BrandTranslation
+    {
+        return $this->createQueryBuilder('bt')
+            ->innerJoin('bt.language', 'l')
+            ->where('bt.slugTranslation = :slug')
+            ->andWhere('l.code = :languageCode')
+            ->setParameter('slug', $slug)
+            ->setParameter('languageCode', $languageCode)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Find incomplete translations (missing name or description)
      */
     public function findIncompleteTranslations(?string $languageCode = null): array

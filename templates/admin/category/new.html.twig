@@ -118,15 +118,14 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="slug-{{ language.code }}" class="form-label">Slug URL</label>
-                                        <input type="text" class="form-control" 
-                                               id="slug-{{ language.code }}" 
-                                               name="translations[{{ language.code }}][slug]" 
-                                               value="{{ translation ? translation.slug : '' }}">
+                                {% if language.isDefault() %}
+                                <div class="col-md-12">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Slug automatique :</strong> Le slug URL sera généré automatiquement à partir du nom de la catégorie.
                                     </div>
                                 </div>
+                                {% endif %}
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="metaTitle-{{ language.code }}" class="form-label">Titre SEO</label>
