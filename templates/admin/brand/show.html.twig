@@ -38,17 +38,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <dl class="row">
-                            <dt class="col-sm-4">Site web:</dt>
-                            <dd class="col-sm-8">
-                                {% if brand.website %}
-                                <a href="{{ brand.website }}" target="_blank" class="text-decoration-none">
-                                    <i class="bi bi-globe me-1"></i>{{ brand.website }}
-                                </a>
-                                {% else %}
-                                <span class="text-muted">Aucun</span>
-                                {% endif %}
-                            </dd>
-                            
                             <dt class="col-sm-4">Statut:</dt>
                             <dd class="col-sm-8">
                                 {% if brand.isActive %}
