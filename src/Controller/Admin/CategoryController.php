@@ -6,7 +6,7 @@ use App\Entity\Category;
 use App\Entity\CategoryTranslation;
 use App\Repository\LanguageRepository;
 use App\Repository\CategoryRepository;
-use App\Service\CategoryTranslationService;
+use App\Repository\CategoryTranslationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,28 +15,26 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/category', name: 'admin_category_')]
-//#[IsGranted('ROLE_ADMIN')]
+#[Route('/admin/category', name: 'admin_category_')]
+#[IsGranted('ROLE_ADMIN')]
 class CategoryController extends AbstractController
 {
     public function __construct(
         private CategoryRepository $categoryRepository,
         private LanguageRepository $languageRepository,
-        private CategoryTranslationService $translationService,
+        private CategoryTranslationRepository $categoryTranslationRepository,
         private EntityManagerInterface $entityManager
     ) {}
 
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(): Response
     {
-        $categories = $this->translationService->getCategoriesWithTranslationStatus();
+        $categories = $this->categoryRepository->findAll();
         $languages = $this->languageRepository->findActiveLanguages();
-        $statistics = $this->translationService->getGlobalTranslationStatistics();
 
         return $this->render('admin/category/index.html.twig', [
             'categories' => $categories,
-            'languages' => $languages,
-            'statistics' => $statistics
+            'languages' => $languages
         ]);
     }
 
@@ -67,7 +65,10 @@ class CategoryController extends AbstractController
         $translations = [];
         
         foreach ($languages as $language) {
-            $translation = $this->translationService->getCategoryTranslation($category, $language->getCode());
+            $translation = $this->categoryTranslationRepository->findOneBy([
+                'category' => $category,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -94,7 +95,10 @@ class CategoryController extends AbstractController
         // Preload existing translations
         $translations = [];
         foreach ($languages as $language) {
-            $translation = $this->translationService->getCategoryTranslation($category, $language->getCode());
+            $translation = $this->categoryTranslationRepository->findOneBy([
+                'category' => $category,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -113,15 +117,8 @@ class CategoryController extends AbstractController
     public function delete(Request $request, Category $category): Response
     {
         if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->request->get('_token'))) {
-            // Check if category has products
-            if ($category->getProducts()->count() > 0) {
-                $this->addFlash('error', 'Impossible de supprimer une catégorie qui contient des produits.');
-                return $this->redirectToRoute('admin_category_show', ['id' => $category->getId()]);
-            }
-
             $this->entityManager->remove($category);
             $this->entityManager->flush();
-
             $this->addFlash('success', 'Catégorie supprimée avec succès.');
         }
 
@@ -169,11 +166,15 @@ class CategoryController extends AbstractController
                     $translationData = $data['translations'][$langCode];
                     
                     if (!empty($translationData['name']) || !empty($translationData['description'])) {
-                        $translation = $this->translationService->getCategoryTranslation($category, $langCode);
+                        $translation = $this->categoryTranslationRepository->findOneBy([
+                            'category' => $category,
+                            'language' => $language
+                        ]);
+                        
                         if (!$translation) {
                             $translation = new CategoryTranslation();
                             $translation->setCategory($category);
-                            $translation->setLanguage($langCode);
+                            $translation->setLanguage($language);
                         }
 
                         if (!empty($translationData['name'])) {

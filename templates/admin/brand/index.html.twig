@@ -26,7 +26,6 @@
                 <thead>
                     <tr>
                         <th>Marque</th>
-                        <th>Site web</th>
                         <th>Produits</th>
                         <th>Statut</th>
                         {% if languages|length > 1 %}
@@ -42,21 +41,12 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-tag-fill text-primary me-2"></i>
                                 <div>
-                                    <strong>{{ brand.getDefaultName() ?? 'Sans nom' }}</strong>
-                                    {% if brand.getDefaultDescription() %}
-                                    <br><small class="text-muted">{{ brand.getDefaultDescription()|slice(0, 60) }}{% if brand.getDefaultDescription()|length > 60 %}...{% endif %}</small>
+                                    <strong>{{ brand.getName() }}</strong>
+                                    {% if brand.getDescription() %}
+                                    <br><small class="text-muted">{{ brand.getDescription()|slice(0, 60) }}{% if brand.getDescription()|length > 60 %}...{% endif %}</small>
                                     {% endif %}
                                 </div>
                             </div>
-                        </td>
-                        <td>
-                            {% if brand.website %}
-                            <a href="{{ brand.website }}" target="_blank" class="text-decoration-none">
-                                <i class="bi bi-globe me-1"></i>{{ brand.website }}
-                            </a>
-                            {% else %}
-                            <span class="text-muted">Aucun</span>
-                            {% endif %}
                         </td>
                         <td>
                             {% if brand.products|length > 0 %}
@@ -78,16 +68,7 @@
                         </td>
                         {% if languages|length > 1 %}
                         <td>
-                            {% if brand.translationStatus is defined %}
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" 
-                                     style="width: {{ brand.translationStatus.percentage }}%">
-                                    {{ brand.translationStatus.percentage }}%
-                                </div>
-                            </div>
-                            {% else %}
-                            <span class="text-muted">N/A</span>
-                            {% endif %}
+                            <span class="text-muted">{{ brand.translations|length }}/{{ languages|length }}</span>
                         </td>
                         {% endif %}
                         <td>

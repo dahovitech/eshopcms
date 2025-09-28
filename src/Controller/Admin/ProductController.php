@@ -6,9 +6,9 @@ use App\Entity\Product;
 use App\Entity\ProductTranslation;
 use App\Repository\LanguageRepository;
 use App\Repository\ProductRepository;
+use App\Repository\ProductTranslationRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\BrandRepository;
-use App\Service\ProductTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,8 +17,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/product', name: 'admin_product_')]
-//#[IsGranted('ROLE_ADMIN')]
+#[Route('/admin/product', name: 'admin_product_')]
+#[IsGranted('ROLE_ADMIN')]
 class ProductController extends AbstractController
 {
     public function __construct(
@@ -26,21 +26,19 @@ class ProductController extends AbstractController
         private LanguageRepository $languageRepository,
         private CategoryRepository $categoryRepository,
         private BrandRepository $brandRepository,
-        private ProductTranslationService $translationService,
+        private ProductTranslationRepository $productTranslationRepository,
         private EntityManagerInterface $entityManager
     ) {}
 
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(): Response
     {
-        $products = $this->translationService->getProductsWithTranslationStatus();
+        $products = $this->productRepository->findAll();
         $languages = $this->languageRepository->findActiveLanguages();
-        $statistics = $this->translationService->getGlobalTranslationStatistics();
 
         return $this->render('admin/product/index.html.twig', [
             'products' => $products,
-            'languages' => $languages,
-            'statistics' => $statistics
+            'languages' => $languages
         ]);
     }
 
@@ -73,7 +71,10 @@ class ProductController extends AbstractController
         $translations = [];
         
         foreach ($languages as $language) {
-            $translation = $this->translationService->getProductTranslation($product, $language->getCode());
+            $translation = $this->productTranslationRepository->findOneBy([
+                'product' => $product,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -101,7 +102,10 @@ class ProductController extends AbstractController
         // Preload existing translations
         $translations = [];
         foreach ($languages as $language) {
-            $translation = $this->translationService->getProductTranslation($product, $language->getCode());
+            $translation = $this->productTranslationRepository->findOneBy([
+                'product' => $product,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -197,11 +201,15 @@ class ProductController extends AbstractController
                     $translationData = $data['translations'][$langCode];
                     
                     if (!empty($translationData['name']) || !empty($translationData['description'])) {
-                        $translation = $this->translationService->getProductTranslation($product, $langCode);
+                        $translation = $this->productTranslationRepository->findOneBy([
+                            'product' => $product,
+                            'language' => $language
+                        ]);
+                        
                         if (!$translation) {
                             $translation = new ProductTranslation();
                             $translation->setProduct($product);
-                            $translation->setLanguage($langCode);
+                            $translation->setLanguage($language);
                         }
 
                         if (!empty($translationData['name'])) {

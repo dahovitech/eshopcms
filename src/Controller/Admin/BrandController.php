@@ -6,7 +6,7 @@ use App\Entity\Brand;
 use App\Entity\BrandTranslation;
 use App\Repository\LanguageRepository;
 use App\Repository\BrandRepository;
-use App\Service\BrandTranslationService;
+use App\Repository\BrandTranslationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,28 +15,26 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/brand', name: 'admin_brand_')]
-//#[IsGranted('ROLE_ADMIN')]
+#[Route('/admin/brand', name: 'admin_brand_')]
+#[IsGranted('ROLE_ADMIN')]
 class BrandController extends AbstractController
 {
     public function __construct(
         private BrandRepository $brandRepository,
         private LanguageRepository $languageRepository,
-        private BrandTranslationService $translationService,
+        private BrandTranslationRepository $brandTranslationRepository,
         private EntityManagerInterface $entityManager
     ) {}
 
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(): Response
     {
-        $brands = $this->translationService->getBrandsWithTranslationStatus();
+        $brands = $this->brandRepository->findAll();
         $languages = $this->languageRepository->findActiveLanguages();
-        $statistics = $this->translationService->getGlobalTranslationStatistics();
 
         return $this->render('admin/brand/index.html.twig', [
             'brands' => $brands,
-            'languages' => $languages,
-            'statistics' => $statistics
+            'languages' => $languages
         ]);
     }
 
@@ -65,7 +63,10 @@ class BrandController extends AbstractController
         $translations = [];
         
         foreach ($languages as $language) {
-            $translation = $this->translationService->getBrandTranslation($brand, $language->getCode());
+            $translation = $this->brandTranslationRepository->findOneBy([
+                'brand' => $brand,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -91,7 +92,10 @@ class BrandController extends AbstractController
         // Preload existing translations
         $translations = [];
         foreach ($languages as $language) {
-            $translation = $this->translationService->getBrandTranslation($brand, $language->getCode());
+            $translation = $this->brandTranslationRepository->findOneBy([
+                'brand' => $brand,
+                'language' => $language
+            ]);
             if ($translation) {
                 $translations[$language->getCode()] = $translation;
             }
@@ -109,15 +113,8 @@ class BrandController extends AbstractController
     public function delete(Request $request, Brand $brand): Response
     {
         if ($this->isCsrfTokenValid('delete'.$brand->getId(), $request->request->get('_token'))) {
-            // Check if brand has products
-            if ($brand->getProducts()->count() > 0) {
-                $this->addFlash('error', 'Impossible de supprimer une marque qui a des produits associés.');
-                return $this->redirectToRoute('admin_brand_show', ['id' => $brand->getId()]);
-            }
-
             $this->entityManager->remove($brand);
             $this->entityManager->flush();
-
             $this->addFlash('success', 'Marque supprimée avec succès.');
         }
 
@@ -142,10 +139,6 @@ class BrandController extends AbstractController
         
         try {
             // Update brand basic data
-            if (isset($data['website'])) {
-                $brand->setWebsite($data['website'] ?: null);
-            }
-            
             $brand->setIsActive(isset($data['isActive']));
 
             if ($isNew) {
@@ -161,11 +154,15 @@ class BrandController extends AbstractController
                     $translationData = $data['translations'][$langCode];
                     
                     if (!empty($translationData['name']) || !empty($translationData['description'])) {
-                        $translation = $this->translationService->getBrandTranslation($brand, $langCode);
+                        $translation = $this->brandTranslationRepository->findOneBy([
+                            'brand' => $brand,
+                            'language' => $language
+                        ]);
+                        
                         if (!$translation) {
                             $translation = new BrandTranslation();
                             $translation->setBrand($brand);
-                            $translation->setLanguage($langCode);
+                            $translation->setLanguage($language);
                         }
 
                         if (!empty($translationData['name'])) {
