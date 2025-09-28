@@ -31,10 +31,19 @@ class CategoryController extends AbstractController
     {
         $categories = $this->categoryRepository->findAll();
         $languages = $this->languageRepository->findActiveLanguages();
+        
+        // Calcul des statistiques simples
+        $statistics = [
+            'totalCategories' => count($categories),
+            'activeCategories' => count(array_filter($categories, fn($c) => $c->isActive())),
+            'parentCategories' => count(array_filter($categories, fn($c) => $c->getParent() === null)),
+            'childCategories' => count(array_filter($categories, fn($c) => $c->getParent() !== null))
+        ];
 
         return $this->render('admin/category/index.html.twig', [
             'categories' => $categories,
-            'languages' => $languages
+            'languages' => $languages,
+            'statistics' => $statistics
         ]);
     }
 

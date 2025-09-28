@@ -35,10 +35,19 @@ class ProductController extends AbstractController
     {
         $products = $this->productRepository->findAll();
         $languages = $this->languageRepository->findActiveLanguages();
+        
+        // Calcul des statistiques simples
+        $statistics = [
+            'totalProducts' => count($products),
+            'activeProducts' => count(array_filter($products, fn($p) => $p->isActive())),
+            'lowStockProducts' => count(array_filter($products, fn($p) => $p->getStock() !== null && $p->getStock() <= 5)),
+            'featuredProducts' => count(array_filter($products, fn($p) => $p->isFeatured()))
+        ];
 
         return $this->render('admin/product/index.html.twig', [
             'products' => $products,
-            'languages' => $languages
+            'languages' => $languages,
+            'statistics' => $statistics
         ]);
     }
 

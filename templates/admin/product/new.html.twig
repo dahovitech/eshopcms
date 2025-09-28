@@ -78,7 +78,7 @@
                                     {% for category in categories %}
                                     <option value="{{ category.id }}" 
                                             {{ product.category and product.category.id == category.id ? 'selected' : '' }}>
-                                        {{ category.getDefaultName() }}
+                                        {{ category.getName() }}
                                     </option>
                                     {% endfor %}
                                 </select>
@@ -94,7 +94,7 @@
                                     {% for brand in brands %}
                                     <option value="{{ brand.id }}" 
                                             {{ product.brand and product.brand.id == brand.id ? 'selected' : '' }}>
-                                        {{ brand.getDefaultName() }}
+                                        {{ brand.getName() }}
                                     </option>
                                     {% endfor %}
                                 </select>

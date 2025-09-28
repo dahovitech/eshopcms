@@ -1,12 +1,12 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ product.getDefaultName() ?? 'Produit' }} - Administration{% endblock %}
+{% block title %}{{ product.getName() ?? 'Produit' }} - Administration{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 mb-0">
-            <i class="bi bi-box-seam me-2"></i>{{ product.getDefaultName() ?? 'Produit Sans Nom' }}
+            <i class="bi bi-box-seam me-2"></i>{{ product.getName() ?? 'Produit Sans Nom' }}
             {% if product.isFeatured %}
             <i class="bi bi-star-fill text-warning ms-2" title="Produit vedette"></i>
             {% endif %}
@@ -14,7 +14,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ path('admin_product_index') }}">Produits</a></li>
-                <li class="breadcrumb-item active">{{ product.getDefaultName() ?? 'Sans nom' }}</li>
+                <li class="breadcrumb-item active">{{ product.getName() ?? 'Sans nom' }}</li>
             </ol>
         </nav>
     </div>
@@ -89,7 +89,7 @@
                             <dt class="col-sm-4">Catégorie:</dt>
                             <dd class="col-sm-8">
                                 {% if product.category %}
-                                <span class="badge bg-secondary">{{ product.category.getDefaultName() }}</span>
+                                <span class="badge bg-secondary">{{ product.category.getName() }}</span>
                                 {% else %}
                                 <span class="text-muted">Aucune</span>
                                 {% endif %}
@@ -98,7 +98,7 @@
                             <dt class="col-sm-4">Marque:</dt>
                             <dd class="col-sm-8">
                                 {% if product.brand %}
-                                <span class="badge bg-info">{{ product.brand.getDefaultName() }}</span>
+                                <span class="badge bg-info">{{ product.brand.getName() }}</span>
                                 {% else %}
                                 <span class="text-muted">Aucune</span>
                                 {% endif %}

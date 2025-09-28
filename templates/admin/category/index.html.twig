@@ -67,11 +67,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title">Traductions</h6>
-                        <h3 class="mb-0">{{ statistics.completionPercentage ?? 0 }}%</h3>
+                        <h6 class="card-title">Enfants</h6>
+                        <h3 class="mb-0">{{ statistics.childCategories ?? 0 }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="bi bi-translate fs-2"></i>
+                        <i class="bi bi-diagram-3 fs-2"></i>
                     </div>
                 </div>
             </div>
@@ -124,7 +124,7 @@
                                 <i class="bi bi-folder me-2"></i>
                                 {% endif %}
                                 <div>
-                                    <strong>{{ category.getDefaultName() ?? 'Sans nom' }}</strong>
+                                    <strong>{{ category.getName() ?? 'Sans nom' }}</strong>
                                     {% if category.getDefaultDescription() %}
                                     <br><small class="text-muted">{{ category.getDefaultDescription()|slice(0, 80) }}{% if category.getDefaultDescription()|length > 80 %}...{% endif %}</small>
                                     {% endif %}
@@ -133,7 +133,7 @@
                         </td>
                         <td>
                             {% if category.parent %}
-                            <span class="badge bg-secondary">{{ category.parent.getDefaultName() }}</span>
+                            <span class="badge bg-secondary">{{ category.parent.getName() }}</span>
                             {% else %}
                             <span class="text-muted">Racine</span>
                             {% endif %}
@@ -161,21 +161,7 @@
                         </td>
                         {% if languages|length > 1 %}
                         <td>
-                            {% if category.translationStatus is defined %}
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" 
-                                     style="width: {{ category.translationStatus.percentage }}%"
-                                     aria-valuenow="{{ category.translationStatus.percentage }}" 
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    {{ category.translationStatus.percentage }}%
-                                </div>
-                            </div>
-                            <small class="text-muted">
-                                {{ category.translationStatus.completed }}/{{ category.translationStatus.total }}
-                            </small>
-                            {% else %}
-                            <span class="text-muted">N/A</span>
-                            {% endif %}
+                            <span class="badge bg-info">{{ category.translations|length }}/{{ languages|length }}</span>
                         </td>
                         {% endif %}
                         <td>

@@ -61,15 +61,13 @@
                                 <hr>
 
                                 <div class="mb-3">
-                                    <h6>Statistiques des traductions</h6>
-                                    {% set translationStatus = service.translationStatus %}
-                                    {% for languageCode, status in translationStatus %}
+                                    <h6>Traductions disponibles</h6>
+                                    {% for language in languages %}
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span>{{ status.translation.language.nativeName }}</span>
-                                            {% if status.complete %}
+                                            <span>{{ language.nativeName }}</span>
+                                            {% set translation = service.translations|filter(t => t.language.code == language.code)|first %}
+                                            {% if translation and translation.name %}
                                                 <span class="badge bg-success">Complet</span>
-                                            {% elseif status.partial %}
-                                                <span class="badge bg-warning">Partiel</span>
                                             {% else %}
                                                 <span class="badge bg-secondary">Vide</span>
                                             {% endif %}

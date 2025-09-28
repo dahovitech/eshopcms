@@ -67,11 +67,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title">Traductions</h6>
-                        <h3 class="mb-0">{{ statistics.completionPercentage ?? 0 }}%</h3>
+                        <h6 class="card-title">Vedettes</h6>
+                        <h3 class="mb-0">{{ statistics.featuredProducts ?? 0 }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="bi bi-translate fs-2"></i>
+                        <i class="bi bi-star fs-2"></i>
                     </div>
                 </div>
             </div>
@@ -126,16 +126,16 @@
                                 <i class="bi bi-star-fill text-warning me-2" title="Produit vedette"></i>
                                 {% endif %}
                                 <div>
-                                    <strong>{{ product.getDefaultName() ?? 'Sans nom' }}</strong>
+                                    <strong>{{ product.getName() ?? 'Sans nom' }}</strong>
                                     {% if product.brand %}
-                                    <br><small class="text-muted">{{ product.brand.getDefaultName() }}</small>
+                                    <br><small class="text-muted">{{ product.brand.getName() }}</small>
                                     {% endif %}
                                 </div>
                             </div>
                         </td>
                         <td>
                             {% if product.category %}
-                            <span class="badge bg-secondary">{{ product.category.getDefaultName() }}</span>
+                            <span class="badge bg-secondary">{{ product.category.getName() }}</span>
                             {% else %}
                             <span class="text-muted">Aucune</span>
                             {% endif %}
@@ -173,21 +173,7 @@
                         </td>
                         {% if languages|length > 1 %}
                         <td>
-                            {% if product.translationStatus is defined %}
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" 
-                                     style="width: {{ product.translationStatus.percentage }}%"
-                                     aria-valuenow="{{ product.translationStatus.percentage }}" 
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    {{ product.translationStatus.percentage }}%
-                                </div>
-                            </div>
-                            <small class="text-muted">
-                                {{ product.translationStatus.completed }}/{{ product.translationStatus.total }}
-                            </small>
-                            {% else %}
-                            <span class="text-muted">N/A</span>
-                            {% endif %}
+                            <span class="badge bg-info">{{ product.translations|length }}/{{ languages|length }}</span>
                         </td>
                         {% endif %}
                         <td>

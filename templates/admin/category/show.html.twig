@@ -1,17 +1,17 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ category.getDefaultName() ?? 'Catégorie' }} - Administration{% endblock %}
+{% block title %}{{ category.getName() ?? 'Catégorie' }} - Administration{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 mb-0">
-            <i class="bi bi-grid-3x3-gap me-2"></i>{{ category.getDefaultName() ?? 'Catégorie Sans Nom' }}
+            <i class="bi bi-grid-3x3-gap me-2"></i>{{ category.getName() ?? 'Catégorie Sans Nom' }}
         </h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ path('admin_category_index') }}">Catégories</a></li>
-                <li class="breadcrumb-item active">{{ category.getDefaultName() ?? 'Sans nom' }}</li>
+                <li class="breadcrumb-item active">{{ category.getName() ?? 'Sans nom' }}</li>
             </ol>
         </nav>
     </div>
@@ -41,7 +41,7 @@
                             <dt class="col-sm-5">Catégorie parent:</dt>
                             <dd class="col-sm-7">
                                 {% if category.parent %}
-                                <span class="badge bg-secondary">{{ category.parent.getDefaultName() }}</span>
+                                <span class="badge bg-secondary">{{ category.parent.getName() }}</span>
                                 {% else %}
                                 <span class="text-muted">Catégorie racine</span>
                                 {% endif %}
