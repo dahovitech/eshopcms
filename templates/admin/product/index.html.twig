@@ -122,9 +122,6 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                {% if product.isFeatured %}
-                                <i class="bi bi-star-fill text-warning me-2" title="Produit vedette"></i>
-                                {% endif %}
                                 <div>
                                     <strong>{{ product.getName() ?? 'Sans nom' }}</strong>
                                     {% if product.brand %}
@@ -134,15 +131,17 @@
                             </div>
                         </td>
                         <td>
-                            {% if product.category %}
-                            <span class="badge bg-secondary">{{ product.category.getName() }}</span>
+                            {% if product.categories|length > 0 %}
+                            {% for category in product.categories %}
+                            <span class="badge bg-secondary">{{ category.getName() }}</span>
+                            {% endfor %}
                             {% else %}
                             <span class="text-muted">Aucune</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if product.basePrice %}
-                            <strong>{{ product.basePrice }} €</strong>
+                            {% if product.price %}
+                            <strong>{{ product.price }} €</strong>
                             {% else %}
                             <span class="text-muted">N/A</span>
                             {% endif %}

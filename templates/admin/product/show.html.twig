@@ -7,9 +7,6 @@
     <div>
         <h1 class="h3 mb-0">
             <i class="bi bi-box-seam me-2"></i>{{ product.getName() ?? 'Produit Sans Nom' }}
-            {% if product.isFeatured %}
-            <i class="bi bi-star-fill text-warning ms-2" title="Produit vedette"></i>
-            {% endif %}
         </h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
@@ -52,8 +49,8 @@
                             
                             <dt class="col-sm-4">Prix:</dt>
                             <dd class="col-sm-8">
-                                {% if product.basePrice %}
-                                <strong class="text-success">{{ product.basePrice }} €</strong>
+                                {% if product.price %}
+                                <strong class="text-success">{{ product.price }} €</strong>
                                 {% else %}
                                 <span class="text-muted">Non défini</span>
                                 {% endif %}
@@ -88,8 +85,10 @@
                         <dl class="row">
                             <dt class="col-sm-4">Catégorie:</dt>
                             <dd class="col-sm-8">
-                                {% if product.category %}
-                                <span class="badge bg-secondary">{{ product.category.getName() }}</span>
+                                {% if product.categories|length > 0 %}
+                                {% for category in product.categories %}
+                                <span class="badge bg-secondary me-1">{{ category.getName() }}</span>
+                                {% endfor %}
                                 {% else %}
                                 <span class="text-muted">Aucune</span>
                                 {% endif %}
@@ -110,9 +109,6 @@
                                 <span class="badge bg-success">Actif</span>
                                 {% else %}
                                 <span class="badge bg-danger">Inactif</span>
-                                {% endif %}
-                                {% if product.isFeatured %}
-                                <span class="badge bg-warning">Vedette</span>
                                 {% endif %}
                             </dd>
                             
@@ -245,12 +241,6 @@
                             onclick="toggleActive({{ product.id }}, {{ product.isActive ? 'false' : 'true' }})">
                         <i class="bi bi-{{ product.isActive ? 'eye-slash' : 'eye' }} me-1"></i>
                         {{ product.isActive ? 'Désactiver' : 'Activer' }}
-                    </button>
-                    
-                    <button type="button" class="btn btn-outline-warning" 
-                            onclick="toggleFeatured({{ product.id }}, {{ product.isFeatured ? 'false' : 'true' }})">
-                        <i class="bi bi-star me-1"></i>
-                        {{ product.isFeatured ? 'Retirer des vedettes' : 'Marquer comme vedette' }}
                     </button>
                     
                     <hr>

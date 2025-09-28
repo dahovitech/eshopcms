@@ -40,8 +40,7 @@ class ProductController extends AbstractController
         $statistics = [
             'totalProducts' => count($products),
             'activeProducts' => count(array_filter($products, fn($p) => $p->isActive())),
-            'lowStockProducts' => count(array_filter($products, fn($p) => $p->getStock() !== null && $p->getStock() <= 5)),
-            'featuredProducts' => count(array_filter($products, fn($p) => $p->isFeatured()))
+            'lowStockProducts' => count(array_filter($products, fn($p) => $p->getStock() !== null && $p->getStock() <= 5))
         ];
 
         return $this->render('admin/product/index.html.twig', [
@@ -155,18 +154,6 @@ class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/toggle-featured', name: 'toggle_featured', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function toggleFeatured(Product $product): JsonResponse
-    {
-        $product->setIsFeatured(!$product->isFeatured());
-        $this->entityManager->flush();
-
-        return new JsonResponse([
-            'success' => true,
-            'isFeatured' => $product->isFeatured()
-        ]);
-    }
-
     private function handleFormSubmission(Request $request, Product $product, array $languages, bool $isNew): Response
     {
         $data = $request->request->all();
@@ -195,7 +182,6 @@ class ProductController extends AbstractController
             }
             
             $product->setIsActive(isset($data['isActive']));
-            $product->setIsFeatured(isset($data['isFeatured']));
 
             if ($isNew) {
                 $this->entityManager->persist($product);
