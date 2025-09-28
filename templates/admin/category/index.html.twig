@@ -1,0 +1,255 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Catégories - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-grid-3x3-gap me-2"></i>Gestion des Catégories
+        </h1>
+        <p class="text-muted mb-0">Organisez vos produits par catégories</p>
+    </div>
+    <a href="{{ path('admin_category_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nouvelle Catégorie
+    </a>
+</div>
+
+{% if statistics %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Catégories</h6>
+                        <h3 class="mb-0">{{ statistics.totalCategories ?? categories|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-grid-3x3-gap fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Catégories Actives</h6>
+                        <h3 class="mb-0">{{ statistics.activeCategories ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-check-circle fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Catégories Parentes</h6>
+                        <h3 class="mb-0">{{ statistics.parentCategories ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-diagram-3 fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Traductions</h6>
+                        <h3 class="mb-0">{{ statistics.completionPercentage ?? 0 }}%</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-translate fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Liste des Catégories</h5>
+            {% if languages|length > 1 %}
+            <div class="btn-group btn-group-sm">
+                {% for language in languages %}
+                <input type="checkbox" class="btn-check" id="lang-{{ language.code }}" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary" for="lang-{{ language.code }}">
+                    {{ language.code|upper }}
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        {% if categories %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Catégorie</th>
+                        <th>Parent</th>
+                        <th>Ordre</th>
+                        <th>Produits</th>
+                        <th>Statut</th>
+                        {% if languages|length > 1 %}
+                        <th>Traductions</th>
+                        {% endif %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if category.children|length > 0 %}
+                                <i class="bi bi-folder-fill text-warning me-2" title="Catégorie parent"></i>
+                                {% else %}
+                                <i class="bi bi-folder me-2"></i>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ category.getDefaultName() ?? 'Sans nom' }}</strong>
+                                    {% if category.getDefaultDescription() %}
+                                    <br><small class="text-muted">{{ category.getDefaultDescription()|slice(0, 80) }}{% if category.getDefaultDescription()|length > 80 %}...{% endif %}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if category.parent %}
+                            <span class="badge bg-secondary">{{ category.parent.getDefaultName() }}</span>
+                            {% else %}
+                            <span class="text-muted">Racine</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ category.sortOrder ?? 0 }}</span>
+                        </td>
+                        <td>
+                            {% if category.products|length > 0 %}
+                            <span class="badge bg-info">{{ category.products|length }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="active-{{ category.id }}" 
+                                       {{ category.isActive ? 'checked' : '' }}
+                                       onchange="toggleActive({{ category.id }}, this.checked)">
+                                <label class="form-check-label" for="active-{{ category.id }}">
+                                    {{ category.isActive ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
+                        </td>
+                        {% if languages|length > 1 %}
+                        <td>
+                            {% if category.translationStatus is defined %}
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ category.translationStatus.percentage }}%"
+                                     aria-valuenow="{{ category.translationStatus.percentage }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ category.translationStatus.percentage }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                {{ category.translationStatus.completed }}/{{ category.translationStatus.total }}
+                            </small>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('admin_category_show', {'id': category.id}) }}" 
+                                   class="btn btn-outline-primary" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_category_edit', {'id': category.id}) }}" 
+                                   class="btn btn-outline-secondary" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if category.products|length == 0 %}
+                                <form method="post" action="{{ path('admin_category_delete', {'id': category.id}) }}" 
+                                      style="display: inline-block;" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <button class="btn btn-outline-danger" disabled title="Impossible de supprimer - contient des produits">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-grid-3x3-gap display-1 text-muted"></i>
+            <h4 class="mt-3">Aucune catégorie</h4>
+            <p class="text-muted">Commencez par créer votre première catégorie.</p>
+            <a href="{{ path('admin_category_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Créer une catégorie
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+function toggleActive(categoryId, isActive) {
+    fetch(`/admin/category/${categoryId}/toggle-active`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            // Revert checkbox if failed
+            const checkbox = document.getElementById(`active-${categoryId}`);
+            checkbox.checked = !isActive;
+            alert('Erreur lors de la mise à jour du statut');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert checkbox if failed
+        const checkbox = document.getElementById(`active-${categoryId}`);
+        checkbox.checked = !isActive;
+        alert('Erreur lors de la mise à jour du statut');
+    });
+}
+</script>
+{% endblock %}

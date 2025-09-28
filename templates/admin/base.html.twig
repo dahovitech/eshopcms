@@ -123,6 +123,33 @@
                 
                 <hr class="text-white-50">
                 
+                <!-- E-commerce Section -->
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+                    <span>E-commerce</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link{% if app.request.get('_route') starts with 'admin_product_' %} active{% endif %}" 
+                           href="{{ path('admin_product_index') }}">
+                            <i class="bi bi-box-seam me-2"></i>Produits
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if app.request.get('_route') starts with 'admin_category_' %} active{% endif %}" 
+                           href="{{ path('admin_category_index') }}">
+                            <i class="bi bi-grid-3x3-gap me-2"></i>Catégories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if app.request.get('_route') starts with 'admin_brand_' %} active{% endif %}" 
+                           href="{{ path('admin_brand_index') }}">
+                            <i class="bi bi-tag me-2"></i>Marques
+                        </a>
+                    </li>
+                </ul>
+                
+                <hr class="text-white-50">
+                
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ path('admin_user_profile') }}">

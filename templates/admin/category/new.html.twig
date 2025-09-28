@@ -1,0 +1,186 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ category.id ? 'Modifier' : 'Nouvelle' }} Catégorie - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-grid-3x3-gap me-2"></i>{{ category.id ? 'Modifier' : 'Nouvelle' }} Catégorie
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_category_index') }}">Catégories</a></li>
+                <li class="breadcrumb-item active">{{ category.id ? 'Modifier' : 'Nouvelle' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="{{ path('admin_category_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+<form method="post" id="categoryForm">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations de base
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="parentId" class="form-label">Catégorie parente</label>
+                                <select class="form-select" id="parentId" name="parentId">
+                                    <option value="">Catégorie racine</option>
+                                    {% for parent in parentCategories %}
+                                        {% if parent.id != category.id %}
+                                        <option value="{{ parent.id }}" 
+                                                {{ category.parent and category.parent.id == parent.id ? 'selected' : '' }}>
+                                            {{ parent.getDefaultName() }}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sortOrder" class="form-label">Ordre d'affichage</label>
+                                <input type="number" class="form-control" id="sortOrder" name="sortOrder" 
+                                       value="{{ category.sortOrder ?? 0 }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isActive" name="isActive" 
+                                   {{ category.isActive ? 'checked' : '' }}>
+                            <label class="form-check-label" for="isActive">Catégorie active</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-translate me-2"></i>Traductions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if languages %}
+                    <ul class="nav nav-tabs" id="languageTabs">
+                        {% for language in languages %}
+                        <li class="nav-item">
+                            <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                    id="tab-{{ language.code }}" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#content-{{ language.code }}" 
+                                    type="button">
+                                <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
+                                {{ language.nativeName }}
+                                {% if language.isDefault() %}
+                                <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                                {% endif %}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="tab-content mt-3" id="languageTabsContent">
+                        {% for language in languages %}
+                        {% set translation = translations[language.code] ?? null %}
+                        <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                             id="content-{{ language.code }}">
+                            
+                            <div class="mb-3">
+                                <label for="name-{{ language.code }}" class="form-label">
+                                    Nom de la catégorie {{ language.isDefault() ? '*' : '' }}
+                                </label>
+                                <input type="text" class="form-control" 
+                                       id="name-{{ language.code }}" 
+                                       name="translations[{{ language.code }}][name]" 
+                                       value="{{ translation ? translation.name : '' }}"
+                                       {{ language.isDefault() ? 'required' : '' }}>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description-{{ language.code }}" class="form-label">Description</label>
+                                <textarea class="form-control" rows="4" 
+                                          id="description-{{ language.code }}" 
+                                          name="translations[{{ language.code }}][description]">{{ translation ? translation.description : '' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="slug-{{ language.code }}" class="form-label">Slug URL</label>
+                                        <input type="text" class="form-control" 
+                                               id="slug-{{ language.code }}" 
+                                               name="translations[{{ language.code }}][slug]" 
+                                               value="{{ translation ? translation.slug : '' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="metaTitle-{{ language.code }}" class="form-label">Titre SEO</label>
+                                        <input type="text" class="form-control" 
+                                               id="metaTitle-{{ language.code }}" 
+                                               name="translations[{{ language.code }}][metaTitle]" 
+                                               value="{{ translation ? translation.metaTitle : '' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="metaDescription-{{ language.code }}" class="form-label">Description SEO</label>
+                                <textarea class="form-control" rows="2" 
+                                          id="metaDescription-{{ language.code }}" 
+                                          name="translations[{{ language.code }}][metaDescription]">{{ translation ? translation.metaDescription : '' }}</textarea>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {{ category.id ? 'Mettre à jour' : 'Créer' }} la catégorie
+                        </button>
+                        <a href="{{ path('admin_category_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Annuler
+                        </a>
+                        {% if category.id and category.products|length == 0 %}
+                        <hr>
+                        <form method="post" action="{{ path('admin_category_delete', {'id': category.id}) }}" 
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

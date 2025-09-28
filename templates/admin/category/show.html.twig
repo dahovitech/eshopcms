@@ -1,0 +1,183 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ category.getDefaultName() ?? 'Catégorie' }} - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-grid-3x3-gap me-2"></i>{{ category.getDefaultName() ?? 'Catégorie Sans Nom' }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_category_index') }}">Catégories</a></li>
+                <li class="breadcrumb-item active">{{ category.getDefaultName() ?? 'Sans nom' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        <a href="{{ path('admin_category_edit', {'id': category.id}) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_category_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Category Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informations de la catégorie
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-5">Catégorie parent:</dt>
+                            <dd class="col-sm-7">
+                                {% if category.parent %}
+                                <span class="badge bg-secondary">{{ category.parent.getDefaultName() }}</span>
+                                {% else %}
+                                <span class="text-muted">Catégorie racine</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-5">Ordre:</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge bg-light text-dark">{{ category.sortOrder ?? 0 }}</span>
+                            </dd>
+                            
+                            <dt class="col-sm-5">Statut:</dt>
+                            <dd class="col-sm-7">
+                                {% if category.isActive %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-5">Produits:</dt>
+                            <dd class="col-sm-7">
+                                {% if category.products|length > 0 %}
+                                <span class="badge bg-info">{{ category.products|length }} produit(s)</span>
+                                {% else %}
+                                <span class="text-muted">Aucun produit</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-5">Sous-catégories:</dt>
+                            <dd class="col-sm-7">
+                                {% if category.children|length > 0 %}
+                                <span class="badge bg-warning">{{ category.children|length }} sous-catégorie(s)</span>
+                                {% else %}
+                                <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-5">Créée le:</dt>
+                            <dd class="col-sm-7">
+                                {% if category.createdAt %}
+                                {{ category.createdAt|date('d/m/Y à H:i') }}
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translations -->
+        {% if translations %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-translate me-2"></i>Traductions
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="translationTabs">
+                    {% for langCode, translation in translations %}
+                    <li class="nav-item">
+                        <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                id="tab-{{ langCode }}" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#content-{{ langCode }}" 
+                                type="button">
+                            <span class="badge bg-primary me-2">{{ langCode|upper }}</span>
+                            {% for language in languages if language.code == langCode %}
+                            {{ language.nativeName }}
+                            {% endfor %}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="tab-content mt-3">
+                    {% for langCode, translation in translations %}
+                    <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                         id="content-{{ langCode }}">
+                        
+                        <h4>{{ translation.name }}</h4>
+                        
+                        {% if translation.description %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Description</h6>
+                            <p>{{ translation.description|nl2br }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if translation.slug %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Slug URL</h6>
+                            <code>/{{ langCode }}/categories/{{ translation.slug }}</code>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('admin_category_edit', {'id': category.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Modifier
+                    </a>
+                    
+                    {% if category.products|length == 0 %}
+                    <form method="post" action="{{ path('admin_category_delete', {'id': category.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash me-1"></i>Supprimer
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-outline-danger w-100" disabled title="Impossible de supprimer - contient des produits">
+                        <i class="bi bi-trash me-1"></i>Contient des produits
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

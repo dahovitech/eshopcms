@@ -1,0 +1,165 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Marques - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-tag me-2"></i>Gestion des Marques
+        </h1>
+        <p class="text-muted mb-0">Gérez les marques de vos produits</p>
+    </div>
+    <a href="{{ path('admin_brand_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nouvelle Marque
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Liste des Marques</h5>
+    </div>
+    <div class="card-body">
+        {% if brands %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Marque</th>
+                        <th>Site web</th>
+                        <th>Produits</th>
+                        <th>Statut</th>
+                        {% if languages|length > 1 %}
+                        <th>Traductions</th>
+                        {% endif %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for brand in brands %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag-fill text-primary me-2"></i>
+                                <div>
+                                    <strong>{{ brand.getDefaultName() ?? 'Sans nom' }}</strong>
+                                    {% if brand.getDefaultDescription() %}
+                                    <br><small class="text-muted">{{ brand.getDefaultDescription()|slice(0, 60) }}{% if brand.getDefaultDescription()|length > 60 %}...{% endif %}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if brand.website %}
+                            <a href="{{ brand.website }}" target="_blank" class="text-decoration-none">
+                                <i class="bi bi-globe me-1"></i>{{ brand.website }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Aucun</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if brand.products|length > 0 %}
+                            <span class="badge bg-info">{{ brand.products|length }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="active-{{ brand.id }}" 
+                                       {{ brand.isActive ? 'checked' : '' }}
+                                       onchange="toggleActive({{ brand.id }}, this.checked)">
+                                <label class="form-check-label" for="active-{{ brand.id }}">
+                                    {{ brand.isActive ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
+                        </td>
+                        {% if languages|length > 1 %}
+                        <td>
+                            {% if brand.translationStatus is defined %}
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ brand.translationStatus.percentage }}%">
+                                    {{ brand.translationStatus.percentage }}%
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('admin_brand_show', {'id': brand.id}) }}" 
+                                   class="btn btn-outline-primary" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_brand_edit', {'id': brand.id}) }}" 
+                                   class="btn btn-outline-secondary" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if brand.products|length == 0 %}
+                                <form method="post" action="{{ path('admin_brand_delete', {'id': brand.id}) }}" 
+                                      style="display: inline-block;" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette marque ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ brand.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <button class="btn btn-outline-danger" disabled title="Impossible de supprimer - a des produits associés">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-tag display-1 text-muted"></i>
+            <h4 class="mt-3">Aucune marque</h4>
+            <p class="text-muted">Commencez par créer votre première marque.</p>
+            <a href="{{ path('admin_brand_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Créer une marque
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+function toggleActive(brandId, isActive) {
+    fetch(`/admin/brand/${brandId}/toggle-active`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            const checkbox = document.getElementById(`active-${brandId}`);
+            checkbox.checked = !isActive;
+            alert('Erreur lors de la mise à jour du statut');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const checkbox = document.getElementById(`active-${brandId}`);
+        checkbox.checked = !isActive;
+        alert('Erreur lors de la mise à jour du statut');
+    });
+}
+</script>
+{% endblock %}

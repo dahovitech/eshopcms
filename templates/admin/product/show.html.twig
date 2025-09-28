@@ -1,0 +1,347 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ product.getDefaultName() ?? 'Produit' }} - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-box-seam me-2"></i>{{ product.getDefaultName() ?? 'Produit Sans Nom' }}
+            {% if product.isFeatured %}
+            <i class="bi bi-star-fill text-warning ms-2" title="Produit vedette"></i>
+            {% endif %}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_product_index') }}">Produits</a></li>
+                <li class="breadcrumb-item active">{{ product.getDefaultName() ?? 'Sans nom' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_product_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Product Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informations du produit
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">SKU:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.sku %}
+                                <code>{{ product.sku }}</code>
+                                {% else %}
+                                <span class="text-muted">Non défini</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Prix:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.basePrice %}
+                                <strong class="text-success">{{ product.basePrice }} €</strong>
+                                {% else %}
+                                <span class="text-muted">Non défini</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Stock:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.stock is not null %}
+                                    {% if product.stock <= 5 %}
+                                    <span class="badge bg-warning">{{ product.stock }} unités</span>
+                                    {% elseif product.stock <= 10 %}
+                                    <span class="badge bg-info">{{ product.stock }} unités</span>
+                                    {% else %}
+                                    <span class="badge bg-success">{{ product.stock }} unités</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">Non géré</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Poids:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.weight %}
+                                {{ product.weight }} kg
+                                {% else %}
+                                <span class="text-muted">Non défini</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Catégorie:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.category %}
+                                <span class="badge bg-secondary">{{ product.category.getDefaultName() }}</span>
+                                {% else %}
+                                <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Marque:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.brand %}
+                                <span class="badge bg-info">{{ product.brand.getDefaultName() }}</span>
+                                {% else %}
+                                <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Statut:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.isActive %}
+                                <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                                {% if product.isFeatured %}
+                                <span class="badge bg-warning">Vedette</span>
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Créé le:</dt>
+                            <dd class="col-sm-8">
+                                {% if product.createdAt %}
+                                {{ product.createdAt|date('d/m/Y à H:i') }}
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translations -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-translate me-2"></i>Traductions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if translations %}
+                <ul class="nav nav-tabs" id="translationTabs">
+                    {% for langCode, translation in translations %}
+                    <li class="nav-item">
+                        <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                id="tab-{{ langCode }}" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#content-{{ langCode }}" 
+                                type="button">
+                            <span class="badge bg-primary me-2">{{ langCode|upper }}</span>
+                            {% for language in languages if language.code == langCode %}
+                            {{ language.nativeName }}
+                            {% if language.isDefault() %}
+                            <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                            {% endif %}
+                            {% endfor %}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="tab-content mt-3" id="translationTabsContent">
+                    {% for langCode, translation in translations %}
+                    <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                         id="content-{{ langCode }}">
+                        
+                        {% if translation.name %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Nom du produit</h6>
+                            <h4>{{ translation.name }}</h4>
+                        </div>
+                        {% endif %}
+
+                        {% if translation.shortDescription %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Description courte</h6>
+                            <p class="lead">{{ translation.shortDescription }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if translation.description %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Description complète</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {{ translation.description|nl2br }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            {% if translation.slug %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-1">Slug URL</h6>
+                                    <code>/{{ langCode }}/products/{{ translation.slug }}</code>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if translation.metaTitle %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-1">Titre SEO</h6>
+                                    <p class="mb-0">{{ translation.metaTitle }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if translation.metaDescription %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-1">Description SEO</h6>
+                            <p class="text-muted mb-0">{{ translation.metaDescription }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Aucune traduction disponible pour ce produit.
+                    <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn btn-sm btn-outline-warning ms-2">
+                        Ajouter des traductions
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Modifier
+                    </a>
+                    
+                    <button type="button" class="btn btn-outline-secondary" 
+                            onclick="toggleActive({{ product.id }}, {{ product.isActive ? 'false' : 'true' }})">
+                        <i class="bi bi-{{ product.isActive ? 'eye-slash' : 'eye' }} me-1"></i>
+                        {{ product.isActive ? 'Désactiver' : 'Activer' }}
+                    </button>
+                    
+                    <button type="button" class="btn btn-outline-warning" 
+                            onclick="toggleFeatured({{ product.id }}, {{ product.isFeatured ? 'false' : 'true' }})">
+                        <i class="bi bi-star me-1"></i>
+                        {{ product.isFeatured ? 'Retirer des vedettes' : 'Marquer comme vedette' }}
+                    </button>
+                    
+                    <hr>
+                    
+                    <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash me-1"></i>Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Statistics -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Statistiques</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-6">ID:</dt>
+                    <dd class="col-sm-6">#{{ product.id }}</dd>
+                    
+                    <dt class="col-sm-6">Traductions:</dt>
+                    <dd class="col-sm-6">
+                        <span class="badge bg-info">{{ translations|length }}/{{ languages|length }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-6">Variantes:</dt>
+                    <dd class="col-sm-6">
+                        <span class="badge bg-secondary">{{ product.variants|length }}</span>
+                    </dd>
+                    
+                    {% if product.updatedAt %}
+                    <dt class="col-sm-6">Modifié:</dt>
+                    <dd class="col-sm-6">{{ product.updatedAt|date('d/m/Y') }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+function toggleActive(productId, newState) {
+    fetch(`/admin/product/${productId}/toggle-active`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la mise à jour du statut');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la mise à jour du statut');
+    });
+}
+
+function toggleFeatured(productId, newState) {
+    fetch(`/admin/product/${productId}/toggle-featured`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la mise à jour du statut vedette');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la mise à jour du statut vedette');
+    });
+}
+</script>
+{% endblock %}
