@@ -541,23 +541,55 @@ function openMediaLibrary(inputName) {
         initializeUpload();
     }, 300);
     
-    // Vérifier si Bootstrap est disponible
+    // Fonction pour ouvrir la modal une fois Bootstrap chargé
+    const openModal = () => {
+        try {
+            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+                const modal = new window.bootstrap.Modal(modalElement);
+                modal.show();
+            } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                // Fallback vers jQuery si Bootstrap n'est pas disponible
+                $(modalElement).modal('show');
+            } else {
+                // Dernière solution : afficher manuellement
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Ajouter backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'mediaModalBackdrop';
+                document.body.appendChild(backdrop);
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ouverture de la modal média:', error);
+            alert('Erreur lors de l\'ouverture de la bibliothèque de médias.');
+        }
+    };
+    
+    // Vérifier si Bootstrap est déjà disponible
     if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-        const modal = new window.bootstrap.Modal(modalElement);
-        modal.show();
-    } else if (typeof $ !== 'undefined' && $.fn.modal) {
-        // Fallback vers jQuery si Bootstrap n'est pas disponible
-        $(modalElement).modal('show');
+        openModal();
     } else {
-        // Dernière solution : afficher manuellement
-        modalElement.style.display = 'block';
-        modalElement.classList.add('show');
-        document.body.classList.add('modal-open');
+        // Attendre que Bootstrap soit chargé (max 3 secondes)
+        let attempts = 0;
+        const maxAttempts = 30; // 30 * 100ms = 3 secondes
         
-        // Ajouter backdrop
-        const backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop fade show';
-        backdrop.id = 'mediaModalBackdrop';
+        const checkBootstrap = () => {
+            attempts++;
+            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+                openModal();
+            } else if (attempts < maxAttempts) {
+                setTimeout(checkBootstrap, 100);
+            } else {
+                console.warn('Bootstrap not loaded after 3 seconds, using fallback');
+                openModal(); // Utiliser les fallbacks
+            }
+        };
+        
+        checkBootstrap();
+    }
         document.body.appendChild(backdrop);
         
         // Initialiser l'upload après affichage
@@ -670,26 +702,43 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
 function closeMediaLibrary() {
     const modalElement = document.getElementById('mediaLibraryModal');
     
-    // Vérifier si Bootstrap est disponible
-    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-        const modal = window.bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-            modal.hide();
+    try {
+        // Vérifier si Bootstrap est disponible
+        if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+            const modal = window.bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            // Fallback vers jQuery si Bootstrap n'est pas disponible
+            $(modalElement).modal('hide');
+        } else {
+            // Dernière solution : cacher manuellement
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Supprimer backdrop
+            const backdrop = document.getElementById('mediaModalBackdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            
+            // Supprimer aussi les backdrops génériques
+            const genericBackdrops = document.querySelectorAll('.modal-backdrop');
+            genericBackdrops.forEach(backdrop => backdrop.remove());
         }
-    } else if (typeof $ !== 'undefined' && $.fn.modal) {
-        // Fallback vers jQuery si Bootstrap n'est pas disponible
-        $(modalElement).modal('hide');
-    } else {
-        // Dernière solution : cacher manuellement
+    } catch (error) {
+        console.error('Erreur lors de la fermeture de la modal média:', error);
+        
+        // Forcer la fermeture en cas d'erreur
         modalElement.style.display = 'none';
         modalElement.classList.remove('show');
         document.body.classList.remove('modal-open');
         
-        // Supprimer backdrop
-        const backdrop = document.getElementById('mediaModalBackdrop');
-        if (backdrop) {
-            backdrop.remove();
-        }
+        // Nettoyer tous les backdrops
+        const allBackdrops = document.querySelectorAll('.modal-backdrop');
+        allBackdrops.forEach(backdrop => backdrop.remove());
     }
 }
 

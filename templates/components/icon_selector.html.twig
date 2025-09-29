@@ -208,9 +208,46 @@ let currentIconInputName = '';
 
 function openIconLibrary(inputName) {
     currentIconInputName = inputName;
-    const modal = new window.bootstrap.Modal(document.getElementById('iconLibraryModal'));
-    loadBootstrapIcons();
-    modal.show();
+    
+    // Fonction pour ouvrir la modal une fois Bootstrap chargé
+    const openModal = () => {
+        try {
+            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+                const modal = new window.bootstrap.Modal(document.getElementById('iconLibraryModal'));
+                loadBootstrapIcons();
+                modal.show();
+            } else {
+                console.error('Bootstrap Modal not available');
+                alert('Erreur: Bootstrap n\'est pas encore chargé. Veuillez réessayer dans un moment.');
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ouverture de la modal:', error);
+            alert('Erreur lors de l\'ouverture de la bibliothèque d\'icônes.');
+        }
+    };
+    
+    // Vérifier si Bootstrap est déjà disponible
+    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+        openModal();
+    } else {
+        // Attendre que Bootstrap soit chargé (max 3 secondes)
+        let attempts = 0;
+        const maxAttempts = 30; // 30 * 100ms = 3 secondes
+        
+        const checkBootstrap = () => {
+            attempts++;
+            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+                openModal();
+            } else if (attempts < maxAttempts) {
+                setTimeout(checkBootstrap, 100);
+            } else {
+                console.error('Bootstrap not loaded after 3 seconds');
+                alert('Erreur: Bootstrap n\'a pas pu être chargé. Veuillez actualiser la page.');
+            }
+        };
+        
+        checkBootstrap();
+    }
 }
 
 function removeSelectedIcon(inputName) {
@@ -238,8 +275,30 @@ function selectIcon(iconClass, iconLabel) {
     iconEmpty.classList.add('d-none');
     
     // Fermer la modal
-    const modal = window.bootstrap.Modal.getInstance(document.getElementById('iconLibraryModal'));
-    modal.hide();
+    try {
+        if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+            const modal = window.bootstrap.Modal.getInstance(document.getElementById('iconLibraryModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            // Fallback: fermer manuellement
+            const modalElement = document.getElementById('iconLibraryModal');
+            if (modalElement) {
+                modalElement.style.display = 'none';
+                modalElement.classList.remove('show');
+                document.body.classList.remove('modal-open');
+                
+                // Supprimer le backdrop
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors de la fermeture de la modal:', error);
+    }
 }
 
 function loadBootstrapIcons(searchTerm = '') {
