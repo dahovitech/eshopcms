@@ -83,7 +83,7 @@
                                         {% endif %}
                                     {% endfor %}
                                     <option value="{{ category.id }}" {{ isSelected ? 'selected' : '' }}>
-                                        {{ category.getName() }}
+                                        {{ category.getName(app.request.locale, 'fr') }}
                                     </option>
                                     {% endfor %}
                                 </select>

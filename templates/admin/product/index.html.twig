@@ -133,7 +133,7 @@
                         <td>
                             {% if product.categories|length > 0 %}
                             {% for category in product.categories %}
-                            <span class="badge bg-secondary">{{ category.getName() }}</span>
+                            <span class="badge bg-secondary">{{ category.getName(app.request.locale, 'fr') }}</span>
                             {% endfor %}
                             {% else %}
                             <span class="text-muted">Aucune</span>

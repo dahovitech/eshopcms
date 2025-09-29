@@ -87,7 +87,7 @@
                             <dd class="col-sm-8">
                                 {% if product.categories|length > 0 %}
                                 {% for category in product.categories %}
-                                <span class="badge bg-secondary me-1">{{ category.getName() }}</span>
+                                <span class="badge bg-secondary me-1">{{ category.getName(app.request.locale, 'fr') }}</span>
                                 {% endfor %}
                                 {% else %}
                                 <span class="text-muted">Aucune</span>

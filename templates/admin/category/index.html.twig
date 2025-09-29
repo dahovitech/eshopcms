@@ -124,9 +124,9 @@
                                 <i class="bi bi-folder me-2"></i>
                                 {% endif %}
                                 <div>
-                                    <strong>{{ category.getName() ?? 'Sans nom' }}</strong>
-                                    {% if category.getDefaultDescription() %}
-                                    <br><small class="text-muted">{{ category.getDefaultDescription()|slice(0, 80) }}{% if category.getDefaultDescription()|length > 80 %}...{% endif %}</small>
+                                    <strong>{{ category.getName(app.request.locale, 'fr') ?? 'Sans nom' }}</strong>
+                                    {% if category.getDescription(app.request.locale, 'fr') %}
+                                    <br><small class="text-muted">{{ category.getDescription(app.request.locale, 'fr')|slice(0, 80) }}{% if category.getDescription(app.request.locale, 'fr')|length > 80 %}...{% endif %}</small>
                                     {% endif %}
                                 </div>
                             </div>
