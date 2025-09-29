@@ -313,9 +313,8 @@
                 </div>
             </div>
 
-            <!-- Product Variations (only if product is variable) -->
-            {% if product.isVariable %}
-            <div class="card mb-4">
+            <!-- Product Variations -->
+            <div class="card mb-4" id="variationsCard" style="display: {{ product.isVariable ? 'block' : 'none' }};">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="bi bi-diagram-3 me-2"></i>Variations du produit
@@ -385,7 +384,6 @@
                     </button>
                 </div>
             </div>
-            {% endif %}
         </div>
 
         <div class="col-md-4">
@@ -502,6 +500,7 @@
 
 {% block extra_javascripts %}
 {{ parent() }}
+<script src="{{ asset('assets/js/product-variants.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Slug generation is now handled automatically on the server side

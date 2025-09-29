@@ -45,7 +45,7 @@ class ProductVariantManager {
 
     toggleVariantsSection() {
         const isVariableCheckbox = document.getElementById('isVariable');
-        const variantsSection = document.querySelector('.card:has(#productVariants)');
+        const variantsSection = document.getElementById('variationsCard');
         
         if (isVariableCheckbox && variantsSection) {
             if (isVariableCheckbox.checked) {
