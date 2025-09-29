@@ -212,13 +212,37 @@ function openIconLibrary(inputName) {
     // Fonction pour ouvrir la modal une fois Bootstrap chargé
     const openModal = () => {
         try {
+            const modalElement = document.getElementById('iconLibraryModal');
+            if (!modalElement) {
+                console.error('Modal element not found');
+                alert('Erreur: Élément modal introuvable.');
+                return;
+            }
+
             if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-                const modal = new window.bootstrap.Modal(document.getElementById('iconLibraryModal'));
+                const modal = new window.bootstrap.Modal(modalElement);
                 loadBootstrapIcons();
                 modal.show();
             } else {
-                console.error('Bootstrap Modal not available');
-                alert('Erreur: Bootstrap n\'est pas encore chargé. Veuillez réessayer dans un moment.');
+                // Fallback : afficher manuellement sans Bootstrap
+                console.warn('Bootstrap not available, using manual fallback');
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Ajouter backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'iconModalBackdrop';
+                document.body.appendChild(backdrop);
+                
+                loadBootstrapIcons();
+                
+                // Gérer la fermeture manuelle
+                const closeButtons = modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+                closeButtons.forEach(button => {
+                    button.onclick = () => closeIconModal();
+                });
             }
         } catch (error) {
             console.error('Erreur lors de l\'ouverture de la modal:', error);
@@ -226,27 +250,30 @@ function openIconLibrary(inputName) {
         }
     };
     
-    // Vérifier si Bootstrap est déjà disponible
-    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-        openModal();
+    // Vérifier si la page est complètement chargée
+    if (document.readyState === 'complete') {
+        // Page déjà chargée, essayer immédiatement
+        setTimeout(openModal, 100);
     } else {
-        // Attendre que Bootstrap soit chargé (max 3 secondes)
-        let attempts = 0;
-        const maxAttempts = 30; // 30 * 100ms = 3 secondes
-        
-        const checkBootstrap = () => {
-            attempts++;
-            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-                openModal();
-            } else if (attempts < maxAttempts) {
-                setTimeout(checkBootstrap, 100);
-            } else {
-                console.error('Bootstrap not loaded after 3 seconds');
-                alert('Erreur: Bootstrap n\'a pas pu être chargé. Veuillez actualiser la page.');
-            }
-        };
-        
-        checkBootstrap();
+        // Attendre que la page soit complètement chargée
+        window.addEventListener('load', () => {
+            setTimeout(openModal, 100);
+        });
+    }
+}
+
+function closeIconModal() {
+    const modalElement = document.getElementById('iconLibraryModal');
+    const backdrop = document.getElementById('iconModalBackdrop');
+    
+    if (modalElement) {
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        document.body.classList.remove('modal-open');
+    }
+    
+    if (backdrop) {
+        backdrop.remove();
     }
 }
 

@@ -69,7 +69,7 @@
                 <h5 class="modal-title">
                     <i class="bi bi-images me-2"></i>Bibliothèque de médias
                 </h5>
-                <button type="button" class="btn-close" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Système d'onglets -->
@@ -164,7 +164,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary">Fermer</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>
@@ -544,6 +544,12 @@ function openMediaLibrary(inputName) {
     // Fonction pour ouvrir la modal une fois Bootstrap chargé
     const openModal = () => {
         try {
+            if (!modalElement) {
+                console.error('Modal element not found');
+                alert('Erreur: Élément modal introuvable.');
+                return;
+            }
+
             if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
                 const modal = new window.bootstrap.Modal(modalElement);
                 modal.show();
@@ -552,6 +558,7 @@ function openMediaLibrary(inputName) {
                 $(modalElement).modal('show');
             } else {
                 // Dernière solution : afficher manuellement
+                console.warn('Bootstrap not available, using manual fallback');
                 modalElement.style.display = 'block';
                 modalElement.classList.add('show');
                 document.body.classList.add('modal-open');
@@ -561,6 +568,12 @@ function openMediaLibrary(inputName) {
                 backdrop.className = 'modal-backdrop fade show';
                 backdrop.id = 'mediaModalBackdrop';
                 document.body.appendChild(backdrop);
+                
+                // Gérer la fermeture manuelle
+                const closeButtons = modalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+                closeButtons.forEach(button => {
+                    button.onclick = () => closeMediaModal();
+                });
             }
         } catch (error) {
             console.error('Erreur lors de l\'ouverture de la modal média:', error);
@@ -568,34 +581,30 @@ function openMediaLibrary(inputName) {
         }
     };
     
-    // Vérifier si Bootstrap est déjà disponible
-    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-        openModal();
+    // Vérifier si la page est complètement chargée
+    if (document.readyState === 'complete') {
+        // Page déjà chargée, essayer immédiatement
+        setTimeout(openModal, 100);
     } else {
-        // Attendre que Bootstrap soit chargé (max 3 secondes)
-        let attempts = 0;
-        const maxAttempts = 30; // 30 * 100ms = 3 secondes
-        
-        const checkBootstrap = () => {
-            attempts++;
-            if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-                openModal();
-            } else if (attempts < maxAttempts) {
-                setTimeout(checkBootstrap, 100);
-            } else {
-                console.warn('Bootstrap not loaded after 3 seconds, using fallback');
-                openModal(); // Utiliser les fallbacks
-            }
-        };
-        
-        checkBootstrap();
+        // Attendre que la page soit complètement chargée
+        window.addEventListener('load', () => {
+            setTimeout(openModal, 100);
+        });
     }
-        document.body.appendChild(backdrop);
-        
-        // Initialiser l'upload après affichage
-        setTimeout(() => {
-            initializeUpload();
-        }, 100);
+}
+
+function closeMediaModal() {
+    const modalElement = document.getElementById('mediaLibraryModal');
+    const backdrop = document.getElementById('mediaModalBackdrop');
+    
+    if (modalElement) {
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        document.body.classList.remove('modal-open');
+    }
+    
+    if (backdrop) {
+        backdrop.remove();
     }
 }
 
