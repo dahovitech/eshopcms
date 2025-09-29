@@ -260,8 +260,8 @@ function toggleAutoSaveStatus() {
     
     $('body').append(toast);
     
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        new bootstrap.Toast(toast[0]).show();
+    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Toast) {
+        new window.bootstrap.Toast(toast[0]).show();
     } else {
         toast.show();
         setTimeout(() => toast.fadeOut(() => toast.remove()), 3000);
@@ -333,8 +333,8 @@ function fillDemoContent() {
     
     $('body').append(toast);
     
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        new bootstrap.Toast(toast[0]).show();
+    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Toast) {
+        new window.bootstrap.Toast(toast[0]).show();
     } else {
         toast.show();
         setTimeout(() => toast.fadeOut(() => toast.remove()), 4000);

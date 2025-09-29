@@ -208,7 +208,7 @@ let currentIconInputName = '';
 
 function openIconLibrary(inputName) {
     currentIconInputName = inputName;
-    const modal = new bootstrap.Modal(document.getElementById('iconLibraryModal'));
+    const modal = new window.bootstrap.Modal(document.getElementById('iconLibraryModal'));
     loadBootstrapIcons();
     modal.show();
 }
@@ -238,7 +238,7 @@ function selectIcon(iconClass, iconLabel) {
     iconEmpty.classList.add('d-none');
     
     // Fermer la modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('iconLibraryModal'));
+    const modal = window.bootstrap.Modal.getInstance(document.getElementById('iconLibraryModal'));
     modal.hide();
 }
 

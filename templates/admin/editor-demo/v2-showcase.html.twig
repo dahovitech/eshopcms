@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             document.body.appendChild(modal);
             
-            const bsModal = new bootstrap.Modal(modal);
+            const bsModal = new window.bootstrap.Modal(modal);
             bsModal.show();
             modal.addEventListener('hidden.bs.modal', () => modal.remove());
         }

@@ -542,8 +542,8 @@ function openMediaLibrary(inputName) {
     }, 300);
     
     // Vérifier si Bootstrap est disponible
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-        const modal = new bootstrap.Modal(modalElement);
+    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+        const modal = new window.bootstrap.Modal(modalElement);
         modal.show();
     } else if (typeof $ !== 'undefined' && $.fn.modal) {
         // Fallback vers jQuery si Bootstrap n'est pas disponible
@@ -671,8 +671,8 @@ function closeMediaLibrary() {
     const modalElement = document.getElementById('mediaLibraryModal');
     
     // Vérifier si Bootstrap est disponible
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-        const modal = bootstrap.Modal.getInstance(modalElement);
+    if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
+        const modal = window.bootstrap.Modal.getInstance(modalElement);
         if (modal) {
             modal.hide();
         }
