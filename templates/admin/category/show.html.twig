@@ -114,8 +114,10 @@
                                 data-bs-target="#content-{{ langCode }}" 
                                 type="button">
                             <span class="badge bg-primary me-2">{{ langCode|upper }}</span>
-                            {% for language in languages if language.code == langCode %}
-                            {{ language.nativeName }}
+                            {% for language in languages %}
+                                {% if language.code == langCode %}
+                                    {{ language.nativeName }}
+                                {% endif %}
                             {% endfor %}
                         </button>
                     </li>
