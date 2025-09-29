@@ -1,0 +1,301 @@
+{#
+    Composant de sélection d'icône Bootstrap
+    
+    Paramètres:
+    - selectedIcon: l'icône actuellement sélectionnée (optionnel)
+    - inputName: nom du champ input (par défaut: 'icon')
+    - label: libellé du champ (par défaut: 'Icône')
+    - required: champ requis ou non (par défaut: false)
+#}
+
+{% set inputName = inputName|default('icon') %}
+{% set label = label|default('Icône') %}
+{% set required = required|default(false) %}
+
+<div class="mb-3">
+    <label class="form-label">
+        {{ label }}
+        {% if required %}<span class="text-danger">*</span>{% endif %}
+    </label>
+    
+    <div class="icon-selector" id="iconSelector_{{ inputName }}">
+        <!-- Champ caché pour stocker l'icône sélectionnée -->
+        <input type="hidden" name="{{ inputName }}" value="{{ selectedIcon }}" id="iconInput_{{ inputName }}">
+        
+        <!-- Aperçu de l'icône sélectionnée -->
+        <div class="icon-preview {% if not selectedIcon %}d-none{% endif %}" id="iconPreview_{{ inputName }}">
+            <div class="icon-preview-container">
+                {% if selectedIcon %}
+                    <i class="{{ selectedIcon }} icon-preview-icon"></i>
+                    <span class="icon-preview-name">{{ selectedIcon }}</span>
+                {% else %}
+                    <i class="icon-preview-icon"></i>
+                    <span class="icon-preview-name">Icône sélectionnée</span>
+                {% endif %}
+                <div class="icon-preview-overlay">
+                    <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="openIconLibrary('{{ inputName }}')">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSelectedIcon('{{ inputName }}')">
+                        <i class="bi bi-trash"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bouton de sélection (affiché quand aucune icône n'est sélectionnée) -->
+        <div class="icon-selector-empty {% if selectedIcon %}d-none{% endif %}" id="iconEmpty_{{ inputName }}">
+            <button type="button" class="btn btn-outline-primary w-100" onclick="openIconLibrary('{{ inputName }}')">
+                <i class="bi bi-star me-2"></i>Sélectionner une icône
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de sélection d'icône -->
+<div class="modal fade" id="iconLibraryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-star me-2"></i>Bibliothèque d'icônes Bootstrap
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Barre de recherche -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <input type="text" class="form-control" id="iconLibrarySearch" placeholder="Rechercher une icône...">
+                    </div>
+                </div>
+                
+                <!-- Grille des icônes -->
+                <div id="iconLibraryGrid" class="row g-2">
+                    <!-- Les icônes seront chargées ici -->
+                </div>
+                
+                <!-- État vide -->
+                <div id="iconLibraryEmpty" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Aucune icône trouvée</h5>
+                    <p class="text-muted">Essayez de modifier votre terme de recherche.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Base styles pour le sélecteur d'icône */
+.icon-selector {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    min-height: 120px;
+    background-color: var(--bs-body-bg);
+}
+
+.icon-preview-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    text-align: center;
+    min-height: 120px;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.icon-preview-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--bs-primary);
+}
+
+.icon-preview-name {
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+    font-family: monospace;
+}
+
+.icon-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 0.375rem;
+}
+
+.icon-preview-container:hover .icon-preview-overlay {
+    opacity: 1;
+}
+
+.icon-preview {
+    text-align: center;
+}
+
+.icon-selector-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+/* Styles pour les items de la bibliothèque d'icônes */
+.icon-library-item {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--bs-body-bg);
+    padding: 1rem;
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-library-item:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+[data-bs-theme="dark"] .icon-library-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.icon-library-item.selected {
+    border-color: var(--bs-primary);
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+.icon-library-item i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--bs-primary);
+}
+
+.icon-library-item .icon-name {
+    font-size: 0.75rem;
+    color: var(--bs-secondary);
+    font-family: monospace;
+}
+
+.icon-library-item .icon-label {
+    font-size: 0.7rem;
+    color: var(--bs-secondary);
+    text-align: center;
+    line-height: 1.2;
+}
+</style>
+
+<script>
+let currentIconInputName = '';
+
+function openIconLibrary(inputName) {
+    currentIconInputName = inputName;
+    const modal = new bootstrap.Modal(document.getElementById('iconLibraryModal'));
+    loadBootstrapIcons();
+    modal.show();
+}
+
+function removeSelectedIcon(inputName) {
+    const iconInput = document.getElementById('iconInput_' + inputName);
+    const iconPreview = document.getElementById('iconPreview_' + inputName);
+    const iconEmpty = document.getElementById('iconEmpty_' + inputName);
+    
+    iconInput.value = '';
+    iconPreview.classList.add('d-none');
+    iconEmpty.classList.remove('d-none');
+}
+
+function selectIcon(iconClass, iconLabel) {
+    const iconInput = document.getElementById('iconInput_' + currentIconInputName);
+    const iconPreview = document.getElementById('iconPreview_' + currentIconInputName);
+    const iconEmpty = document.getElementById('iconEmpty_' + currentIconInputName);
+    const iconPreviewIcon = iconPreview.querySelector('.icon-preview-icon');
+    const iconPreviewName = iconPreview.querySelector('.icon-preview-name');
+    
+    iconInput.value = iconClass;
+    iconPreviewIcon.className = iconClass + ' icon-preview-icon';
+    iconPreviewName.textContent = iconClass;
+    
+    iconPreview.classList.remove('d-none');
+    iconEmpty.classList.add('d-none');
+    
+    // Fermer la modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('iconLibraryModal'));
+    modal.hide();
+}
+
+function loadBootstrapIcons(searchTerm = '') {
+    fetch('/admin/category/bootstrap-icons')
+        .then(response => response.json())
+        .then(icons => {
+            const grid = document.getElementById('iconLibraryGrid');
+            const empty = document.getElementById('iconLibraryEmpty');
+            
+            // Filtrer les icônes si un terme de recherche est fourni
+            const filteredIcons = searchTerm ? 
+                Object.fromEntries(
+                    Object.entries(icons).filter(([key, value]) => 
+                        key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        value.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                ) : icons;
+            
+            if (Object.keys(filteredIcons).length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            
+            let html = '';
+            for (const [iconClass, iconLabel] of Object.entries(filteredIcons)) {
+                html += `
+                    <div class="col-md-3 col-sm-4 col-6">
+                        <div class="icon-library-item" onclick="selectIcon('${iconClass}', '${iconLabel}')">
+                            <i class="${iconClass}"></i>
+                            <div class="icon-name">${iconClass}</div>
+                            <div class="icon-label">${iconLabel}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des icônes:', error);
+        });
+}
+
+// Recherche d'icônes
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('iconLibrarySearch');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadBootstrapIcons(this.value);
+            }, 300);
+        });
+    }
+});
+</script>

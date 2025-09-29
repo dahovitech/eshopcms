@@ -152,6 +152,46 @@
         </div>
 
         <div class="col-md-4">
+            <!-- Category Image -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-image me-2"></i>Image de la catégorie
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% include 'components/media_selector.html.twig' with {
+                        'selectedMedia': category.image,
+                        'inputName': 'imageId',
+                        'label': '',
+                        'required': false
+                    } %}
+                </div>
+            </div>
+
+            <!-- Category Icon -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-star me-2"></i>Icône de la catégorie
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% include 'components/icon_selector.html.twig' with {
+                        'selectedIcon': category.icon,
+                        'inputName': 'icon',
+                        'label': '',
+                        'required': false
+                    } %}
+                    <div class="form-text">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Sélectionnez une icône Bootstrap pour représenter cette catégorie.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="card">
                 <div class="card-header">

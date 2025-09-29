@@ -36,6 +36,9 @@ class Category
     #[ORM\JoinColumn(nullable: true)]
     private ?Media $image = null;
 
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $icon = null;
+
     #[ORM\Column(type: 'boolean')]
     private bool $isActive = true;
 
@@ -348,6 +351,17 @@ class Category
     public function isLeaf(): bool
     {
         return $this->children->isEmpty();
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(?string $icon): static
+    {
+        $this->icon = $icon;
+        return $this;
     }
 
     public function __toString(): string

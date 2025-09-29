@@ -102,6 +102,10 @@ class Product
     #[ORM\JoinTable(name: 'product_media')]
     private Collection $media;
 
+    #[ORM\ManyToOne(targetEntity: Media::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Media $primaryImage = null;
+
     public function __construct()
     {
         $this->categories = new ArrayCollection();
@@ -528,11 +532,22 @@ class Product
     }
 
     /**
-     * Get primary media
+     * Get primary media (fallback to first media if no specific primary image is set)
      */
     public function getPrimaryMedia(): ?Media
     {
-        return $this->media->first() ?: null;
+        return $this->primaryImage ?: ($this->media->first() ?: null);
+    }
+
+    public function getPrimaryImage(): ?Media
+    {
+        return $this->primaryImage;
+    }
+
+    public function setPrimaryImage(?Media $primaryImage): static
+    {
+        $this->primaryImage = $primaryImage;
+        return $this;
     }
 
     /**

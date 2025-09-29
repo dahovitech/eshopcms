@@ -7,6 +7,8 @@ use App\Entity\CategoryTranslation;
 use App\Repository\LanguageRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\CategoryTranslationRepository;
+use App\Repository\MediaRepository;
+use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +25,8 @@ class CategoryController extends AbstractController
         private CategoryRepository $categoryRepository,
         private LanguageRepository $languageRepository,
         private CategoryTranslationRepository $categoryTranslationRepository,
+        private MediaRepository $mediaRepository,
+        private MediaService $mediaService,
         private EntityManagerInterface $entityManager
     ) {}
 
@@ -162,6 +166,23 @@ class CategoryController extends AbstractController
             
             $category->setIsActive(isset($data['isActive']));
 
+            // Handle media attachment
+            if (isset($data['imageId']) && !empty($data['imageId'])) {
+                $image = $this->mediaRepository->find($data['imageId']);
+                if ($image) {
+                    $category->setImage($image);
+                }
+            } else {
+                $category->setImage(null);
+            }
+
+            // Handle icon selection
+            if (isset($data['icon']) && !empty($data['icon'])) {
+                $category->setIcon($data['icon']);
+            } else {
+                $category->setIcon(null);
+            }
+
             if ($isNew) {
                 $this->entityManager->persist($category);
             }
@@ -217,5 +238,38 @@ class CategoryController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_category_index');
+    }
+
+    #[Route('/bootstrap-icons', name: 'bootstrap_icons', methods: ['GET'])]
+    public function getBootstrapIcons(): JsonResponse
+    {
+        return new JsonResponse($this->mediaService->getBootstrapIcons());
+    }
+
+    #[Route('/media-library', name: 'media_library', methods: ['GET'])]
+    public function mediaLibrary(Request $request): JsonResponse
+    {
+        $page = $request->query->getInt('page', 1);
+        $search = $request->query->get('search');
+        
+        $result = $this->mediaService->getMediaList($page, 20, $search);
+        
+        $mediaData = [];
+        foreach ($result['medias'] as $media) {
+            $mediaData[] = [
+                'id' => $media->getId(),
+                'fileName' => $media->getFileName(),
+                'alt' => $media->getAlt(),
+                'webPath' => $media->getWebPath(),
+                'extension' => $media->getExtension()
+            ];
+        }
+        
+        return new JsonResponse([
+            'medias' => $mediaData,
+            'total' => $result['total'],
+            'totalPages' => $result['totalPages'],
+            'currentPage' => $result['currentPage']
+        ]);
     }
 }

@@ -9,6 +9,8 @@ use App\Repository\ProductRepository;
 use App\Repository\ProductTranslationRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\BrandRepository;
+use App\Repository\MediaRepository;
+use App\Service\MediaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,6 +29,8 @@ class ProductController extends AbstractController
         private CategoryRepository $categoryRepository,
         private BrandRepository $brandRepository,
         private ProductTranslationRepository $productTranslationRepository,
+        private MediaRepository $mediaRepository,
+        private MediaService $mediaService,
         private EntityManagerInterface $entityManager
     ) {}
 
@@ -154,6 +158,33 @@ class ProductController extends AbstractController
         ]);
     }
 
+    #[Route('/media-library', name: 'media_library', methods: ['GET'])]
+    public function mediaLibrary(Request $request): JsonResponse
+    {
+        $page = $request->query->getInt('page', 1);
+        $search = $request->query->get('search');
+        
+        $result = $this->mediaService->getMediaList($page, 20, $search);
+        
+        $mediaData = [];
+        foreach ($result['medias'] as $media) {
+            $mediaData[] = [
+                'id' => $media->getId(),
+                'fileName' => $media->getFileName(),
+                'alt' => $media->getAlt(),
+                'webPath' => $media->getWebPath(),
+                'extension' => $media->getExtension()
+            ];
+        }
+        
+        return new JsonResponse([
+            'medias' => $mediaData,
+            'total' => $result['total'],
+            'totalPages' => $result['totalPages'],
+            'currentPage' => $result['currentPage']
+        ]);
+    }
+
     private function handleFormSubmission(Request $request, Product $product, array $languages, bool $isNew): Response
     {
         $data = $request->request->all();
@@ -182,6 +213,32 @@ class ProductController extends AbstractController
             }
             
             $product->setIsActive(isset($data['isActive']));
+
+            // Handle media attachments
+            if (isset($data['primaryImageId']) && !empty($data['primaryImageId'])) {
+                $primaryImage = $this->mediaRepository->find($data['primaryImageId']);
+                if ($primaryImage) {
+                    $product->setPrimaryImage($primaryImage);
+                }
+            } else {
+                $product->setPrimaryImage(null);
+            }
+
+            // Handle additional media
+            if (isset($data['mediaIds']) && is_array($data['mediaIds'])) {
+                // Clear existing media
+                $product->getMedia()->clear();
+                
+                // Add selected media
+                foreach ($data['mediaIds'] as $mediaId) {
+                    if (!empty($mediaId)) {
+                        $media = $this->mediaRepository->find($mediaId);
+                        if ($media) {
+                            $product->addMedia($media);
+                        }
+                    }
+                }
+            }
 
             if ($isNew) {
                 $this->entityManager->persist($product);

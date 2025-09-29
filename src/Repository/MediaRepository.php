@@ -19,6 +19,34 @@ class MediaRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Media::class);
     }
+
+    /**
+     * Rechercher des médias par terme de recherche
+     */
+    public function findBySearch(string $search, int $limit, int $offset): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.fileName LIKE :search OR m.alt LIKE :search')
+            ->setParameter('search', '%' . $search . '%')
+            ->orderBy('m.id', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Compter les médias correspondant à une recherche
+     */
+    public function countBySearch(string $search): int
+    {
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where('m.fileName LIKE :search OR m.alt LIKE :search')
+            ->setParameter('search', '%' . $search . '%')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
     // /**
     //  * @return Media[] Returns an array of Media objects
     //  */

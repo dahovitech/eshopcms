@@ -245,6 +245,52 @@
                 </div>
             </div>
 
+            <!-- Primary Image -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-image me-2"></i>Image principale
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% include 'components/media_selector.html.twig' with {
+                        'selectedMedia': product.primaryImage,
+                        'inputName': 'primaryImageId',
+                        'label': '',
+                        'required': false
+                    } %}
+                </div>
+            </div>
+
+            <!-- Additional Images -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-images me-2"></i>Images supplémentaires
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="additionalImages">
+                        {% for media in product.media %}
+                            <div class="additional-image-item mb-3" data-index="{{ loop.index0 }}">
+                                {% include 'components/media_selector.html.twig' with {
+                                    'selectedMedia': media,
+                                    'inputName': 'mediaIds[' ~ loop.index0 ~ ']',
+                                    'label': 'Image ' ~ loop.index,
+                                    'required': false
+                                } %}
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeAdditionalImage(this)">
+                                    <i class="bi bi-trash me-1"></i>Supprimer
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="addAdditionalImage()">
+                        <i class="bi bi-plus me-1"></i>Ajouter une image
+                    </button>
+                </div>
+            </div>
+
             <!-- Product Info -->
             {% if product.id %}
             <div class="card">
@@ -289,5 +335,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // Slug generation is now handled automatically on the server side
     console.log('Automatic slug generation enabled');
 });
+
+let additionalImageIndex = {{ product.media|length }};
+
+function addAdditionalImage() {
+    const container = document.getElementById('additionalImages');
+    const newImageHtml = `
+        <div class="additional-image-item mb-3" data-index="${additionalImageIndex}">
+            <div class="mb-3">
+                <label class="form-label">Image ${additionalImageIndex + 1}</label>
+                <div class="media-selector" id="mediaSelector_mediaIds[${additionalImageIndex}]">
+                    <input type="hidden" name="mediaIds[${additionalImageIndex}]" value="" id="mediaInput_mediaIds[${additionalImageIndex}]">
+                    <div class="media-preview d-none" id="mediaPreview_mediaIds[${additionalImageIndex}]">
+                        <div class="media-preview-container">
+                            <img src="" alt="" class="media-preview-image" style="display: none;">
+                            <div class="media-preview-overlay">
+                                <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="openMediaLibrary('mediaIds[${additionalImageIndex}]')">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSelectedMedia('mediaIds[${additionalImageIndex}]')">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                        <div class="media-preview-info">
+                            <small class="text-muted">Image sélectionnée</small>
+                        </div>
+                    </div>
+                    <div class="media-selector-empty" id="mediaEmpty_mediaIds[${additionalImageIndex}]">
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="openMediaLibrary('mediaIds[${additionalImageIndex}]')">
+                            <i class="bi bi-image me-2"></i>Sélectionner une image
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeAdditionalImage(this)">
+                <i class="bi bi-trash me-1"></i>Supprimer
+            </button>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', newImageHtml);
+    additionalImageIndex++;
+}
+
+function removeAdditionalImage(button) {
+    const imageItem = button.closest('.additional-image-item');
+    imageItem.remove();
+}
 </script>
 {% endblock %}
