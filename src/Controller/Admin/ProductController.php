@@ -4,13 +4,18 @@ namespace App\Controller\Admin;
 
 use App\Entity\Product;
 use App\Entity\ProductTranslation;
+use App\Entity\ProductVariant;
+use App\Entity\Language;
+use App\Form\ProductType;
 use App\Repository\LanguageRepository;
 use App\Repository\ProductRepository;
 use App\Repository\ProductTranslationRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\BrandRepository;
 use App\Repository\MediaRepository;
+use App\Repository\AttributeRepository;
 use App\Service\MediaService;
+use App\Service\SlugService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/product', name: 'admin_product_')]
 #[IsGranted('ROLE_ADMIN')]
@@ -30,7 +36,9 @@ class ProductController extends AbstractController
         private BrandRepository $brandRepository,
         private ProductTranslationRepository $productTranslationRepository,
         private MediaRepository $mediaRepository,
+        private AttributeRepository $attributeRepository,
         private MediaService $mediaService,
+        private SluggerInterface $slugger,
         private EntityManagerInterface $entityManager
     ) {}
 
@@ -59,20 +67,43 @@ class ProductController extends AbstractController
     {
         $product = new Product();
         $languages = $this->languageRepository->findActiveLanguages();
-        $defaultLanguage = $this->languageRepository->findDefaultLanguage();
-        $categories = $this->categoryRepository->findAll();
-        $brands = $this->brandRepository->findAll();
+        
+        // Initialize translations for all active languages
+        foreach ($languages as $language) {
+            $translation = new ProductTranslation();
+            $translation->setLanguage($language);
+            $product->addTranslation($translation);
+        }
 
-        if ($request->isMethod('POST')) {
-            return $this->handleFormSubmission($request, $product, $languages, true);
+        $form = $this->createForm(ProductType::class, $product);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                // Generate slugs for translations
+                foreach ($product->getTranslations() as $translation) {
+                    if ($translation->getName() && !$translation->getSlug()) {
+                        $slug = $this->slugger->slug($translation->getName())->lower();
+                        $translation->setSlug($slug);
+                    }
+                }
+
+                $this->entityManager->persist($product);
+                $this->entityManager->flush();
+
+                $this->addFlash('success', 'Produit créé avec succès.');
+                return $this->redirectToRoute('admin_product_show', ['id' => $product->getId()]);
+
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la création : ' . $e->getMessage());
+            }
         }
 
         return $this->render('admin/product/new.html.twig', [
             'product' => $product,
+            'form' => $form->createView(),
             'languages' => $languages,
-            'defaultLanguage' => $defaultLanguage,
-            'categories' => $categories,
-            'brands' => $brands
+            'attributes' => $this->attributeRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC'])
         ]);
     }
 
@@ -103,33 +134,44 @@ class ProductController extends AbstractController
     public function edit(Request $request, Product $product): Response
     {
         $languages = $this->languageRepository->findActiveLanguages();
-        $defaultLanguage = $this->languageRepository->findDefaultLanguage();
-        $categories = $this->categoryRepository->findAll();
-        $brands = $this->brandRepository->findAll();
-
-        if ($request->isMethod('POST')) {
-            return $this->handleFormSubmission($request, $product, $languages, false);
+        
+        // Ensure translations exist for all active languages
+        foreach ($languages as $language) {
+            if (!$product->hasTranslation($language->getCode())) {
+                $translation = new ProductTranslation();
+                $translation->setLanguage($language);
+                $product->addTranslation($translation);
+            }
         }
 
-        // Preload existing translations
-        $translations = [];
-        foreach ($languages as $language) {
-            $translation = $this->productTranslationRepository->findOneBy([
-                'product' => $product,
-                'language' => $language
-            ]);
-            if ($translation) {
-                $translations[$language->getCode()] = $translation;
+        $form = $this->createForm(ProductType::class, $product);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                // Update slugs for translations
+                foreach ($product->getTranslations() as $translation) {
+                    if ($translation->getName() && !$translation->getSlug()) {
+                        $slug = $this->slugger->slug($translation->getName())->lower();
+                        $translation->setSlug($slug);
+                    }
+                }
+
+                $this->entityManager->flush();
+
+                $this->addFlash('success', 'Produit modifié avec succès.');
+                return $this->redirectToRoute('admin_product_show', ['id' => $product->getId()]);
+
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification : ' . $e->getMessage());
             }
         }
 
         return $this->render('admin/product/edit.html.twig', [
             'product' => $product,
+            'form' => $form->createView(),
             'languages' => $languages,
-            'defaultLanguage' => $defaultLanguage,
-            'categories' => $categories,
-            'brands' => $brands,
-            'translations' => $translations
+            'attributes' => $this->attributeRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC'])
         ]);
     }
 
@@ -146,16 +188,75 @@ class ProductController extends AbstractController
         return $this->redirectToRoute('admin_product_index');
     }
 
-    #[Route('/{id}/toggle-active', name: 'toggle_active', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function toggleActive(Product $product): JsonResponse
+    #[Route('/{id}/toggle-status', name: 'toggle_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleStatus(Product $product): JsonResponse
     {
-        $product->setIsActive(!$product->isActive());
+        $currentStatus = $product->getStatus();
+        $newStatus = $currentStatus === Product::STATUS_ACTIVE ? Product::STATUS_INACTIVE : Product::STATUS_ACTIVE;
+        
+        $product->setStatus($newStatus);
         $this->entityManager->flush();
 
         return new JsonResponse([
             'success' => true,
-            'isActive' => $product->isActive()
+            'status' => $newStatus,
+            'isActive' => $newStatus === Product::STATUS_ACTIVE
         ]);
+    }
+
+    #[Route('/{id}/variants', name: 'variants', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function variants(Product $product): Response
+    {
+        return $this->render('admin/product/variants.html.twig', [
+            'product' => $product,
+            'attributes' => $this->attributeRepository->findBy([
+                'isVariant' => true, 
+                'isActive' => true
+            ], ['sortOrder' => 'ASC'])
+        ]);
+    }
+
+    #[Route('/{id}/add-variant', name: 'add_variant', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function addVariant(Request $request, Product $product): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            
+            $variant = new ProductVariant();
+            $variant->setProduct($product);
+            $variant->setSku($data['sku'] ?? '');
+            $variant->setPrice($data['price'] ?? null);
+            $variant->setStock($data['stock'] ?? 0);
+            
+            // Handle attribute values
+            if (isset($data['attributeValues']) && is_array($data['attributeValues'])) {
+                foreach ($data['attributeValues'] as $attributeValueId) {
+                    $attributeValue = $this->entityManager->getRepository('App:AttributeValue')->find($attributeValueId);
+                    if ($attributeValue) {
+                        $variant->addAttributeValue($attributeValue);
+                    }
+                }
+            }
+            
+            $this->entityManager->persist($variant);
+            $this->entityManager->flush();
+            
+            return new JsonResponse([
+                'success' => true,
+                'variant' => [
+                    'id' => $variant->getId(),
+                    'sku' => $variant->getSku(),
+                    'price' => $variant->getPrice(),
+                    'stock' => $variant->getStock()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     #[Route('/media-library', name: 'media_library', methods: ['GET'])]
@@ -185,118 +286,4 @@ class ProductController extends AbstractController
         ]);
     }
 
-    private function handleFormSubmission(Request $request, Product $product, array $languages, bool $isNew): Response
-    {
-        $data = $request->request->all();
-        
-        try {
-            // Update product basic data
-            if (isset($data['sku'])) {
-                $product->setSku($data['sku']);
-            }
-            if (isset($data['basePrice'])) {
-                $product->setBasePrice($data['basePrice']);
-            }
-            if (isset($data['stock'])) {
-                $product->setStock((int)$data['stock']);
-            }
-            if (isset($data['weight'])) {
-                $product->setWeight($data['weight'] ? (float)$data['weight'] : null);
-            }
-            if (isset($data['categoryId'])) {
-                $category = $this->categoryRepository->find($data['categoryId']);
-                $product->setCategory($category);
-            }
-            if (isset($data['brandId'])) {
-                $brand = $this->brandRepository->find($data['brandId']);
-                $product->setBrand($brand);
-            }
-            
-            $product->setIsActive(isset($data['isActive']));
-
-            // Handle media attachments
-            if (isset($data['primaryImageId']) && !empty($data['primaryImageId'])) {
-                $primaryImage = $this->mediaRepository->find($data['primaryImageId']);
-                if ($primaryImage) {
-                    $product->setPrimaryImage($primaryImage);
-                }
-            } else {
-                $product->setPrimaryImage(null);
-            }
-
-            // Handle additional media
-            if (isset($data['mediaIds']) && is_array($data['mediaIds'])) {
-                // Clear existing media
-                $product->getMedia()->clear();
-                
-                // Add selected media
-                foreach ($data['mediaIds'] as $mediaId) {
-                    if (!empty($mediaId)) {
-                        $media = $this->mediaRepository->find($mediaId);
-                        if ($media) {
-                            $product->addMedia($media);
-                        }
-                    }
-                }
-            }
-
-            if ($isNew) {
-                $this->entityManager->persist($product);
-            }
-            
-            $this->entityManager->flush();
-
-            // Handle translations
-            foreach ($languages as $language) {
-                $langCode = $language->getCode();
-                if (isset($data['translations'][$langCode])) {
-                    $translationData = $data['translations'][$langCode];
-                    
-                    if (!empty($translationData['name']) || !empty($translationData['description'])) {
-                        $translation = $this->productTranslationRepository->findOneBy([
-                            'product' => $product,
-                            'language' => $language
-                        ]);
-                        
-                        if (!$translation) {
-                            $translation = new ProductTranslation();
-                            $translation->setProduct($product);
-                            $translation->setLanguage($language);
-                        }
-
-                        if (!empty($translationData['name'])) {
-                            $translation->setName($translationData['name']);
-                        }
-                        if (!empty($translationData['description'])) {
-                            $translation->setDescription($translationData['description']);
-                        }
-                        if (!empty($translationData['shortDescription'])) {
-                            $translation->setShortDescription($translationData['shortDescription']);
-                        }
-                        if (!empty($translationData['slug'])) {
-                            $translation->setSlug($translationData['slug']);
-                        }
-                        if (!empty($translationData['metaTitle'])) {
-                            $translation->setMetaTitle($translationData['metaTitle']);
-                        }
-                        if (!empty($translationData['metaDescription'])) {
-                            $translation->setMetaDescription($translationData['metaDescription']);
-                        }
-
-                        $this->entityManager->persist($translation);
-                    }
-                }
-            }
-
-            $this->entityManager->flush();
-
-            $this->addFlash('success', $isNew ? 'Produit créé avec succès.' : 'Produit modifié avec succès.');
-            return $this->redirectToRoute('admin_product_show', ['id' => $product->getId()]);
-
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Erreur lors de l\'enregistrement : ' . $e->getMessage());
-        }
-
-        return $this->redirectToRoute('admin_product_index');
-    }
 }

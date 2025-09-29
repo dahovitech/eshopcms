@@ -1,0 +1,193 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Valeurs d'Attributs - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-list me-2"></i>Valeurs d'Attributs
+            {% if currentAttribute %}
+            - {{ currentAttribute.getName(app.request.locale, 'fr') }}
+            {% endif %}
+        </h1>
+        <p class="text-muted mb-0">Gérez les valeurs possibles pour les attributs</p>
+    </div>
+    <div class="btn-group">
+        {% if currentAttribute %}
+        <a href="{{ path('admin_attribute_show', {'id': currentAttribute.id}) }}" class="btn btn-outline-info">
+            <i class="bi bi-eye me-1"></i>Voir l'attribut
+        </a>
+        <a href="{{ path('admin_attribute_value_new', {'attribute': currentAttribute.id}) }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nouvelle Valeur
+        </a>
+        {% else %}
+        <a href="{{ path('admin_attribute_value_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nouvelle Valeur
+        </a>
+        {% endif %}
+        <a href="{{ path('admin_attribute_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Attributs
+        </a>
+    </div>
+</div>
+
+<!-- Filter by Attribute -->
+{% if not currentAttribute and attributes %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <label for="attributeFilter" class="form-label mb-0">Filtrer par attribut:</label>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select" id="attributeFilter" onchange="filterByAttribute(this.value)">
+                    <option value="">Tous les attributs</option>
+                    {% for attribute in attributes %}
+                    <option value="{{ attribute.id }}" {{ currentAttribute and currentAttribute.id == attribute.id ? 'selected' : '' }}>
+                        {{ attribute.getName(app.request.locale, 'fr') }} ({{ attribute.values|length }} valeurs)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Liste des Valeurs d'Attributs</h5>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if attributeValues %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        {% if not currentAttribute %}
+                        <th>Attribut</th>
+                        {% endif %}
+                        <th>Valeur</th>
+                        <th>Type</th>
+                        <th>Couleur</th>
+                        <th>Statut</th>
+                        {% if languages|length > 1 %}
+                        <th>Traductions</th>
+                        {% endif %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attributeValue in attributeValues %}
+                    <tr>
+                        {% if not currentAttribute %}
+                        <td>
+                            <a href="{{ path('admin_attribute_show', {'id': attributeValue.attribute.id}) }}" class="text-decoration-none">
+                                <strong>{{ attributeValue.attribute.getName(app.request.locale, 'fr') }}</strong>
+                            </a>
+                            <br><small class="text-muted">{{ attributeValue.attribute.code }}</small>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <strong>{{ attributeValue.getName(app.request.locale, 'fr') }}</strong>
+                            {% if attributeValue.value != attributeValue.getName(app.request.locale, 'fr') %}
+                            <br><small class="text-muted">{{ attributeValue.value }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set typeLabels = {
+                                'text': 'Texte',
+                                'number': 'Nombre', 
+                                'select': 'Sélection',
+                                'color': 'Couleur',
+                                'boolean': 'Booléen'
+                            } %}
+                            <span class="badge bg-secondary">{{ typeLabels[attributeValue.attribute.type] ?? attributeValue.attribute.type }}</span>
+                        </td>
+                        <td>
+                            {% if attributeValue.hexColor %}
+                            <span class="d-inline-block me-2" 
+                                  style="width: 20px; height: 20px; background-color: {{ attributeValue.hexColor }}; border: 1px solid #ccc; border-radius: 3px;"></span>
+                            <small class="text-muted">{{ attributeValue.hexColor }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if attributeValue.isActive %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        {% if languages|length > 1 %}
+                        <td>
+                            <span class="badge bg-info">{{ attributeValue.translations|length }}/{{ languages|length }}</span>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('admin_attribute_value_show', {'id': attributeValue.id}) }}" 
+                                   class="btn btn-outline-primary" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_attribute_value_edit', {'id': attributeValue.id}) }}" 
+                                   class="btn btn-outline-secondary" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="{{ path('admin_attribute_value_delete', {'id': attributeValue.id}) }}" 
+                                      style="display: inline-block;" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette valeur ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ attributeValue.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-list display-1 text-muted"></i>
+            <h4 class="mt-3">Aucune valeur d'attribut</h4>
+            <p class="text-muted">
+                {% if currentAttribute %}
+                Aucune valeur définie pour l'attribut "{{ currentAttribute.getName(app.request.locale, 'fr') }}".
+                {% else %}
+                Commencez par créer votre première valeur d'attribut.
+                {% endif %}
+            </p>
+            {% if currentAttribute %}
+            <a href="{{ path('admin_attribute_value_new', {'attribute': currentAttribute.id}) }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Créer une valeur
+            </a>
+            {% else %}
+            <a href="{{ path('admin_attribute_value_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Créer une valeur
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+function filterByAttribute(attributeId) {
+    if (attributeId) {
+        window.location.href = `{{ path('admin_attribute_value_index') }}?attribute=${attributeId}`;
+    } else {
+        window.location.href = `{{ path('admin_attribute_value_index') }}`;
+    }
+}
+</script>
+{% endblock %}

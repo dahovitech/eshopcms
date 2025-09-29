@@ -1,0 +1,420 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ product.id ? 'Modifier' : 'Nouveau' }} Produit - Administration{% endblock %}
+
+{% block extra_stylesheets %}
+{{ parent() }}
+<style>
+.variant-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+}
+.attribute-selector {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+}
+.dimension-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+.form-floating-sm {
+    position: relative;
+}
+.form-floating-sm > .form-control {
+    height: calc(2.5rem + 2px);
+    padding: 0.5rem 0.75rem;
+}
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+}
+@media (max-width: 768px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+    .dimension-inputs {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-box-seam me-2"></i>{{ product.id ? 'Modifier' : 'Nouveau' }} Produit
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_product_index') }}">Produits</a></li>
+                <li class="breadcrumb-item active">{{ product.id ? 'Modifier' : 'Nouveau' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        {% if product.id %}
+        <a href="{{ path('admin_product_show', {'id': product.id}) }}" class="btn btn-outline-primary">
+            <i class="bi bi-eye me-1"></i>Voir
+        </a>
+        <a href="{{ path('admin_product_variants', {'id': product.id}) }}" class="btn btn-outline-info">
+            <i class="bi bi-layers me-1"></i>Variantes
+        </a>
+        {% endif %}
+        <a href="{{ path('admin_product_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+{{ form_start(form, {'attr': {'id': 'productForm', 'novalidate': 'novalidate'}}) }}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations de base
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.sku, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.status, {'attr': {'class': 'form-select'}}) }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing -->
+                    <div class="pricing-grid">
+                        <div class="mb-3">
+                            {{ form_row(form.price) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_row(form.compareAtPrice) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_row(form.costPrice) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.brand) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.categories) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory & Shipping -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-box me-2"></i>Stock et Expédition
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.stock) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.lowStockThreshold) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.weight) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Dimensions (L x l x H en cm)</label>
+                                <div class="dimension-inputs">
+                                    <input type="number" class="form-control form-control-sm" name="dimensions[length]" 
+                                           value="{{ product.dimensions.length ?? '' }}" placeholder="Longueur" step="0.1">
+                                    <input type="number" class="form-control form-control-sm" name="dimensions[width]" 
+                                           value="{{ product.dimensions.width ?? '' }}" placeholder="Largeur" step="0.1">
+                                    <input type="number" class="form-control form-control-sm" name="dimensions[height]" 
+                                           value="{{ product.dimensions.height ?? '' }}" placeholder="Hauteur" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Options -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                {{ form_widget(form.trackStock, {'attr': {'class': 'form-check-input'}}) }}
+                                {{ form_label(form.trackStock, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                {{ form_widget(form.isVariable, {'attr': {'class': 'form-check-input', 'onchange': 'toggleVariantSection()'}}) }}
+                                {{ form_label(form.isVariable, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                {{ form_widget(form.isDigital, {'attr': {'class': 'form-check-input'}}) }}
+                                {{ form_label(form.isDigital, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Variants -->
+            <div class="card mb-4" id="variants-section" style="{{ not form.vars.value.isVariable ? 'display: none;' : '' }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-layers me-2"></i>Variantes du Produit
+                    </h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addVariant()">
+                        <i class="bi bi-plus me-1"></i>Ajouter une variante
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="variants-container">
+                        {{ form_widget(form.variants) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-translate me-2"></i>Traductions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if languages %}
+                    <ul class="nav nav-tabs" id="languageTabs">
+                        {% for language in languages %}
+                        <li class="nav-item">
+                            <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                    id="tab-{{ language.code }}" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#content-{{ language.code }}" 
+                                    type="button">
+                                <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
+                                {{ language.nativeName }}
+                                {% if language.isDefault() %}
+                                <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                                {% endif %}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="tab-content mt-3" id="languageTabsContent">
+                        {% for translation in form.translations %}
+                        {% set language = translation.vars.value.language %}
+                        <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                             id="content-{{ language.code }}">
+                            
+                            {{ form_widget(translation.language) }}
+                            
+                            <div class="mb-3">
+                                {{ form_row(translation.name) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.shortDescription) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.description) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(translation.metaTitle) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(translation.slug) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.metaDescription) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Aucune langue n'est configurée. Veuillez d'abord configurer les langues.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {{ product.id ? 'Mettre à jour' : 'Créer' }} le produit
+                        </button>
+                        <a href="{{ path('admin_product_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Annuler
+                        </a>
+                        {% if product.id %}
+                        <hr>
+                        <form method="post" action="{{ path('admin_product_delete', {'id': product.id}) }}" 
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ product.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Management -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-images me-2"></i>Images
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>La gestion des médias sera intégrée dans une prochaine version.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            {% if product.id %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">ID:</dt>
+                        <dd class="col-sm-7">#{{ product.id }}</dd>
+                        
+                        <dt class="col-sm-5">Créé le:</dt>
+                        <dd class="col-sm-7">
+                            {% if product.createdAt %}
+                            {{ product.createdAt|date('d/m/Y H:i') }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-5">Modifié le:</dt>
+                        <dd class="col-sm-7">
+                            {% if product.updatedAt %}
+                            {{ product.updatedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </dd>
+
+                        {% if product.variants|length > 0 %}
+                        <dt class="col-sm-5">Variantes:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-info">{{ product.variants|length }}</span>
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{{ form_end(form) }}
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-slug generation
+    const nameInputs = document.querySelectorAll('input[name*="[name]"]');
+    nameInputs.forEach(function(nameInput) {
+        const languageCode = nameInput.name.match(/\[([a-z]{2})\]/)[1];
+        const slugInput = document.querySelector(`input[name*="[${languageCode}]"][name*="[slug]"]`);
+        
+        if (nameInput && slugInput && !slugInput.value) {
+            nameInput.addEventListener('input', function() {
+                const slug = this.value
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim('-');
+                slugInput.value = slug;
+            });
+        }
+    });
+});
+
+function toggleVariantSection() {
+    const checkbox = document.getElementById('{{ form.isVariable.vars.id }}');
+    const variantSection = document.getElementById('variants-section');
+    
+    if (checkbox.checked) {
+        variantSection.style.display = 'block';
+    } else {
+        variantSection.style.display = 'none';
+    }
+}
+
+let variantIndex = {{ form.variants|length }};
+
+function addVariant() {
+    // This would be implemented with JavaScript to dynamically add variant forms
+    console.log('Adding variant functionality to be implemented');
+}
+</script>
+{% endblock %}

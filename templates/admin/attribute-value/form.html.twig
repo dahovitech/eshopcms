@@ -1,0 +1,284 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ attributeValue.id ? 'Modifier' : 'Nouvelle' }} Valeur d'Attribut - Administration{% endblock %}
+
+{% block extra_stylesheets %}
+{{ parent() }}
+<style>
+.color-preview {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-list me-2"></i>{{ attributeValue.id ? 'Modifier' : 'Nouvelle' }} Valeur d'Attribut
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_attribute_index') }}">Attributs</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('admin_attribute_value_index') }}">Valeurs</a></li>
+                <li class="breadcrumb-item active">{{ attributeValue.id ? 'Modifier' : 'Nouvelle' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        {% if attributeValue.id %}
+        <a href="{{ path('admin_attribute_value_show', {'id': attributeValue.id}) }}" class="btn btn-outline-primary">
+            <i class="bi bi-eye me-1"></i>Voir
+        </a>
+        {% endif %}
+        {% if attributeValue.attribute %}
+        <a href="{{ path('admin_attribute_show', {'id': attributeValue.attribute.id}) }}" class="btn btn-outline-info">
+            <i class="bi bi-tags me-1"></i>Attribut
+        </a>
+        <a href="{{ path('admin_attribute_value_index', {'attribute': attributeValue.attribute.id}) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+        {% else %}
+        <a href="{{ path('admin_attribute_value_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{{ form_start(form, {'attr': {'id': 'attributeValueForm', 'novalidate': 'novalidate'}}) }}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations de base
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if not attributeValue.attribute %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Vous devez d'abord sélectionner un attribut pour cette valeur.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        {% if not form.vars.data.attribute %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Attribut *</label>
+                                <select class="form-select" name="attribute" required>
+                                    <option value="">Sélectionner un attribut</option>
+                                    {% for attribute in form.vars.value.attribute ? [form.vars.value.attribute] : [] %}
+                                    <option value="{{ attribute.id }}" selected>{{ attribute.getName(app.request.locale, 'fr') }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.value) }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        {% if attributeValue.attribute and attributeValue.attribute.type == 'color' %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.hexColor) }}
+                                <div id="color-preview" class="mt-2">
+                                    <span class="color-preview" id="preview-box" 
+                                          style="background-color: {{ attributeValue.hexColor ?? '#ffffff' }};"></span>
+                                    <small class="text-muted">Aperçu de la couleur</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_row(form.sortOrder) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Options</label>
+                                <div class="form-check">
+                                    {{ form_widget(form.isActive) }}
+                                    {{ form_label(form.isActive, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form_row(form.image) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-translate me-2"></i>Traductions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if languages %}
+                    <ul class="nav nav-tabs" id="languageTabs">
+                        {% for language in languages %}
+                        <li class="nav-item">
+                            <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                    id="tab-{{ language.code }}" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#content-{{ language.code }}" 
+                                    type="button">
+                                <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
+                                {{ language.nativeName }}
+                                {% if language.isDefault() %}
+                                <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                                {% endif %}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="tab-content mt-3" id="languageTabsContent">
+                        {% for translation in form.translations %}
+                        {% set language = translation.vars.value.language %}
+                        <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                             id="content-{{ language.code }}">
+                            
+                            {{ form_widget(translation.language) }}
+                            
+                            <div class="mb-3">
+                                {{ form_row(translation.name) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.description) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {{ attributeValue.id ? 'Mettre à jour' : 'Créer' }} la valeur
+                        </button>
+                        {% if attributeValue.attribute %}
+                        <a href="{{ path('admin_attribute_value_index', {'attribute': attributeValue.attribute.id}) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Annuler
+                        </a>
+                        {% else %}
+                        <a href="{{ path('admin_attribute_value_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Annuler
+                        </a>
+                        {% endif %}
+                        {% if attributeValue.id %}
+                        <hr>
+                        <form method="post" action="{{ path('admin_attribute_value_delete', {'id': attributeValue.id}) }}" 
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette valeur ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ attributeValue.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attribute Info -->
+            {% if attributeValue.attribute %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Attribut</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Nom:</dt>
+                        <dd class="col-sm-7">
+                            <a href="{{ path('admin_attribute_show', {'id': attributeValue.attribute.id}) }}" class="text-decoration-none">
+                                {{ attributeValue.attribute.getName(app.request.locale, 'fr') }}
+                            </a>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Code:</dt>
+                        <dd class="col-sm-7"><code>{{ attributeValue.attribute.code }}</code></dd>
+                        
+                        <dt class="col-sm-5">Type:</dt>
+                        <dd class="col-sm-7">
+                            {% set typeLabels = {
+                                'text': 'Texte',
+                                'number': 'Nombre', 
+                                'select': 'Sélection',
+                                'color': 'Couleur',
+                                'boolean': 'Booléen'
+                            } %}
+                            <span class="badge bg-secondary">{{ typeLabels[attributeValue.attribute.type] ?? attributeValue.attribute.type }}</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Help -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Aide</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Valeur :</h6>
+                    <p class="small">La valeur interne utilisée par le système. Peut être différente du nom affiché.</p>
+                    
+                    <h6>Couleur hex :</h6>
+                    <p class="small">Uniquement pour les attributs de type "couleur". Format : #RRGGBB (ex: #FF0000 pour rouge).</p>
+                    
+                    <h6>Traductions :</h6>
+                    <p class="small">Le nom affiché dans chaque langue. Si vide, la valeur interne sera utilisée.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{{ form_end(form) }}
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+// Color preview update
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('{{ form.hexColor.vars.id }}');
+    const previewBox = document.getElementById('preview-box');
+    
+    if (colorInput && previewBox) {
+        colorInput.addEventListener('input', function() {
+            previewBox.style.backgroundColor = this.value || '#ffffff';
+        });
+    }
+});
+</script>
+{% endblock %}

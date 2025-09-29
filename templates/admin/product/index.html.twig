@@ -163,10 +163,18 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" 
                                        id="active-{{ product.id }}" 
-                                       {{ product.isActive ? 'checked' : '' }}
-                                       onchange="toggleActive({{ product.id }}, this.checked)">
+                                       {{ product.status == 'active' ? 'checked' : '' }}
+                                       onchange="toggleStatus({{ product.id }}, this.checked)">
                                 <label class="form-check-label" for="active-{{ product.id }}">
-                                    {{ product.isActive ? 'Actif' : 'Inactif' }}
+                                    {% if product.status == 'active' %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% elseif product.status == 'inactive' %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% elseif product.status == 'draft' %}
+                                        <span class="badge bg-warning">Brouillon</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Archivé</span>
+                                    {% endif %}
                                 </label>
                             </div>
                         </td>
@@ -217,8 +225,8 @@
 {% block extra_javascripts %}
 {{ parent() }}
 <script>
-function toggleActive(productId, isActive) {
-    fetch(`/admin/product/${productId}/toggle-active`, {
+function toggleStatus(productId, isActive) {
+    fetch(`/admin/product/${productId}/toggle-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -227,7 +235,22 @@ function toggleActive(productId, isActive) {
     })
     .then(response => response.json())
     .then(data => {
-        if (!data.success) {
+        if (data.success) {
+            // Update the status badge
+            const checkbox = document.getElementById(`active-${productId}`);
+            const label = checkbox.nextElementSibling;
+            const badge = label.querySelector('.badge');
+            
+            if (data.isActive) {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Actif';
+                checkbox.checked = true;
+            } else {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Inactif';
+                checkbox.checked = false;
+            }
+        } else {
             // Revert checkbox if failed
             const checkbox = document.getElementById(`active-${productId}`);
             checkbox.checked = !isActive;

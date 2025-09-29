@@ -1,0 +1,333 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ attribute.id ? 'Modifier' : 'Nouvel' }} Attribut - Administration{% endblock %}
+
+{% block extra_stylesheets %}
+{{ parent() }}
+<style>
+.attribute-value-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+}
+.color-preview {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 8px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-tags me-2"></i>{{ attribute.id ? 'Modifier' : 'Nouvel' }} Attribut
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_attribute_index') }}">Attributs</a></li>
+                <li class="breadcrumb-item active">{{ attribute.id ? 'Modifier' : 'Nouveau' }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        {% if attribute.id %}
+        <a href="{{ path('admin_attribute_show', {'id': attribute.id}) }}" class="btn btn-outline-primary">
+            <i class="bi bi-eye me-1"></i>Voir
+        </a>
+        <a href="{{ path('admin_attribute_value_index', {'attribute': attribute.id}) }}" class="btn btn-outline-info">
+            <i class="bi bi-list me-1"></i>Valeurs
+        </a>
+        {% endif %}
+        <a href="{{ path('admin_attribute_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+{{ form_start(form, {'attr': {'id': 'attributeForm', 'novalidate': 'novalidate'}}) }}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations de base
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.code) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.type) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_row(form.sortOrder) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Options</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-check">
+                                            {{ form_widget(form.isActive) }}
+                                            {{ form_label(form.isActive, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-check">
+                                            {{ form_widget(form.isRequired) }}
+                                            {{ form_label(form.isRequired, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-check">
+                                            {{ form_widget(form.isVariant) }}
+                                            {{ form_label(form.isVariant, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-check">
+                                            {{ form_widget(form.isFilterable) }}
+                                            {{ form_label(form.isFilterable, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form_row(form.configuration) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Values -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list me-2"></i>Valeurs
+                    </h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addAttributeValue()">
+                        <i class="bi bi-plus me-1"></i>Ajouter une valeur
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="values-container">
+                        {% for valueForm in form.values %}
+                            <div class="attribute-value-item">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ form_row(valueForm.value) }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ form_row(valueForm.hexColor) }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ form_row(valueForm.sortOrder) }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check mt-4">
+                                            {{ form_widget(valueForm.isActive) }}
+                                            {{ form_label(valueForm.isActive, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" 
+                                                onclick="removeAttributeValue(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {{ form_widget(valueForm.image) }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if form.values|length == 0 %}
+                    <div class="alert alert-info" id="no-values-message">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Aucune valeur définie. Cliquez sur "Ajouter une valeur" pour commencer.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Translations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-translate me-2"></i>Traductions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if languages %}
+                    <ul class="nav nav-tabs" id="languageTabs">
+                        {% for language in languages %}
+                        <li class="nav-item">
+                            <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                    id="tab-{{ language.code }}" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#content-{{ language.code }}" 
+                                    type="button">
+                                <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
+                                {{ language.nativeName }}
+                                {% if language.isDefault() %}
+                                <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                                {% endif %}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="tab-content mt-3" id="languageTabsContent">
+                        {% for translation in form.translations %}
+                        {% set language = translation.vars.value.language %}
+                        <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                             id="content-{{ language.code }}">
+                            
+                            {{ form_widget(translation.language) }}
+                            
+                            <div class="mb-3">
+                                {{ form_row(translation.name) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.description) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(translation.placeholder) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {{ attribute.id ? 'Mettre à jour' : 'Créer' }} l'attribut
+                        </button>
+                        <a href="{{ path('admin_attribute_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Annuler
+                        </a>
+                        {% if attribute.id %}
+                        <hr>
+                        <form method="post" action="{{ path('admin_attribute_delete', {'id': attribute.id}) }}" 
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet attribut ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ attribute.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Aide</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Types d'attributs :</h6>
+                    <ul class="small">
+                        <li><strong>Texte :</strong> Texte libre</li>
+                        <li><strong>Nombre :</strong> Valeur numérique</li>
+                        <li><strong>Sélection :</strong> Liste de choix</li>
+                        <li><strong>Couleur :</strong> Couleur avec aperçu</li>
+                        <li><strong>Booléen :</strong> Oui/Non</li>
+                    </ul>
+                    
+                    <h6>Options :</h6>
+                    <ul class="small">
+                        <li><strong>Variante :</strong> Crée des variations de produit</li>
+                        <li><strong>Filtrable :</strong> Peut être utilisé comme filtre</li>
+                        <li><strong>Obligatoire :</strong> Doit être renseigné</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{{ form_end(form) }}
+{% endblock %}
+
+{% block extra_javascripts %}
+{{ parent() }}
+<script>
+let valueIndex = {{ form.values|length }};
+
+function addAttributeValue() {
+    // This would be implemented with JavaScript to dynamically add value forms
+    console.log('Adding attribute value functionality to be implemented');
+    // Hide no-values message
+    const noValuesMessage = document.getElementById('no-values-message');
+    if (noValuesMessage) {
+        noValuesMessage.style.display = 'none';
+    }
+}
+
+function removeAttributeValue(button) {
+    const item = button.closest('.attribute-value-item');
+    if (item) {
+        item.remove();
+        
+        // Show no-values message if no items left
+        const container = document.getElementById('values-container');
+        if (container.children.length === 0) {
+            const noValuesMessage = document.getElementById('no-values-message');
+            if (noValuesMessage) {
+                noValuesMessage.style.display = 'block';
+            }
+        }
+    }
+}
+
+// Auto-generate code from name
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultLangNameInput = document.querySelector('[id$="_name"]');
+    const codeInput = document.getElementById('{{ form.code.vars.id }}');
+    
+    if (defaultLangNameInput && codeInput && !codeInput.value) {
+        defaultLangNameInput.addEventListener('input', function() {
+            const code = this.value
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+/g, '_')
+                .substring(0, 50);
+            codeInput.value = code;
+        });
+    }
+});
+</script>
+{% endblock %}

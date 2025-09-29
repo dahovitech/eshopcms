@@ -1,0 +1,263 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Attribut {{ attribute.getName(app.request.locale, 'fr') }} - Administration{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-tags me-2"></i>{{ attribute.getName(app.request.locale, 'fr') }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_attribute_index') }}">Attributs</a></li>
+                <li class="breadcrumb-item active">{{ attribute.getName(app.request.locale, 'fr') }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        <a href="{{ path('admin_attribute_value_index', {'attribute': attribute.id}) }}" class="btn btn-outline-info">
+            <i class="bi bi-list me-1"></i>Valeurs
+        </a>
+        <a href="{{ path('admin_attribute_edit', {'id': attribute.id}) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_attribute_index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informations de base
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Code:</dt>
+                    <dd class="col-sm-9"><code>{{ attribute.code }}</code></dd>
+                    
+                    <dt class="col-sm-3">Type:</dt>
+                    <dd class="col-sm-9">
+                        {% set typeLabels = {
+                            'text': 'Texte',
+                            'number': 'Nombre', 
+                            'select': 'Sélection',
+                            'color': 'Couleur',
+                            'boolean': 'Booléen'
+                        } %}
+                        <span class="badge bg-secondary">{{ typeLabels[attribute.type] ?? attribute.type }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-3">Ordre de tri:</dt>
+                    <dd class="col-sm-9">{{ attribute.sortOrder }}</dd>
+                    
+                    <dt class="col-sm-3">Options:</dt>
+                    <dd class="col-sm-9">
+                        {% if attribute.isActive %}
+                        <span class="badge bg-success me-1">Actif</span>
+                        {% else %}
+                        <span class="badge bg-secondary me-1">Inactif</span>
+                        {% endif %}
+                        
+                        {% if attribute.isRequired %}
+                        <span class="badge bg-warning me-1">Obligatoire</span>
+                        {% endif %}
+                        
+                        {% if attribute.isVariant %}
+                        <span class="badge bg-primary me-1">Variante</span>
+                        {% endif %}
+                        
+                        {% if attribute.isFilterable %}
+                        <span class="badge bg-info me-1">Filtrable</span>
+                        {% endif %}
+                    </dd>
+                    
+                    {% if attribute.configuration %}
+                    <dt class="col-sm-3">Configuration:</dt>
+                    <dd class="col-sm-9">
+                        <pre class="small bg-light p-2 rounded">{{ attribute.configuration|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                    </dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Values -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list me-2"></i>Valeurs ({{ attribute.values|length }})
+                </h5>
+                <a href="{{ path('admin_attribute_value_new', {'attribute': attribute.id}) }}" 
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-plus me-1"></i>Ajouter une valeur
+                </a>
+            </div>
+            <div class="card-body">
+                {% if attribute.values %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Valeur</th>
+                                {% if attribute.type == 'color' %}
+                                <th>Couleur</th>
+                                {% endif %}
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for value in attribute.values %}
+                            <tr>
+                                <td>{{ value.getName(app.request.locale, 'fr') }}</td>
+                                {% if attribute.type == 'color' and value.hexColor %}
+                                <td>
+                                    <span class="d-inline-block me-2" 
+                                          style="width: 20px; height: 20px; background-color: {{ value.hexColor }}; border: 1px solid #ccc; border-radius: 3px;"></span>
+                                    <small class="text-muted">{{ value.hexColor }}</small>
+                                </td>
+                                {% elseif attribute.type == 'color' %}
+                                <td><small class="text-muted">Aucune couleur</small></td>
+                                {% endif %}
+                                <td>
+                                    {% if value.isActive %}
+                                    <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('admin_attribute_value_show', {'id': value.id}) }}" 
+                                           class="btn btn-outline-primary" title="Voir">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ path('admin_attribute_value_edit', {'id': value.id}) }}" 
+                                           class="btn btn-outline-secondary" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-list display-4 text-muted"></i>
+                    <h5 class="mt-3">Aucune valeur</h5>
+                    <p class="text-muted">Ajoutez des valeurs pour cet attribut.</p>
+                    <a href="{{ path('admin_attribute_value_new', {'attribute': attribute.id}) }}" 
+                       class="btn btn-primary">
+                        <i class="bi bi-plus me-1"></i>Ajouter une valeur
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Translations -->
+        {% if languages|length > 1 %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-translate me-2"></i>Traductions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Langue</th>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th>Placeholder</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for language in languages %}
+                            {% set translation = attribute.getTranslation(language.code) %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">{{ language.code|upper }}</span>
+                                    {{ language.nativeName }}
+                                </td>
+                                <td>{{ translation ? translation.name : '-' }}</td>
+                                <td>{{ translation ? (translation.description|slice(0, 50) ~ (translation.description|length > 50 ? '...' : '')) : '-' }}</td>
+                                <td>{{ translation ? translation.placeholder : '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('admin_attribute_edit', {'id': attribute.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Modifier l'attribut
+                    </a>
+                    <a href="{{ path('admin_attribute_value_new', {'attribute': attribute.id}) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus me-1"></i>Ajouter une valeur
+                    </a>
+                    <hr>
+                    <form method="post" action="{{ path('admin_attribute_delete', {'id': attribute.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet attribut ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ attribute.id) }}">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash me-1"></i>Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">ID:</dt>
+                    <dd class="col-sm-7">#{{ attribute.id }}</dd>
+                    
+                    <dt class="col-sm-5">Créé le:</dt>
+                    <dd class="col-sm-7">{{ attribute.createdAt|date('d/m/Y H:i') }}</dd>
+                    
+                    <dt class="col-sm-5">Modifié le:</dt>
+                    <dd class="col-sm-7">{{ attribute.updatedAt|date('d/m/Y H:i') }}</dd>
+                    
+                    <dt class="col-sm-5">Valeurs:</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge bg-info">{{ attribute.values|length }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-5">Traductions:</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge bg-info">{{ attribute.translations|length }}/{{ languages|length }}</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
