@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Product;
 use App\Entity\ProductTranslation;
+use App\Entity\ProductVariant;
 use App\Repository\LanguageRepository;
 use App\Repository\ProductRepository;
 use App\Repository\ProductTranslationRepository;
@@ -194,18 +195,58 @@ class ProductController extends AbstractController
             if (isset($data['sku'])) {
                 $product->setSku($data['sku']);
             }
-            if (isset($data['basePrice'])) {
-                $product->setBasePrice($data['basePrice']);
+            if (isset($data['price'])) {
+                $product->setPrice($data['price']);
+            }
+            if (isset($data['compareAtPrice'])) {
+                $product->setCompareAtPrice($data['compareAtPrice'] ?: null);
+            }
+            if (isset($data['costPrice'])) {
+                $product->setCostPrice($data['costPrice'] ?: null);
             }
             if (isset($data['stock'])) {
                 $product->setStock((int)$data['stock']);
             }
-            if (isset($data['weight'])) {
-                $product->setWeight($data['weight'] ? (float)$data['weight'] : null);
+            if (isset($data['lowStockThreshold'])) {
+                $product->setLowStockThreshold($data['lowStockThreshold'] ? (int)$data['lowStockThreshold'] : null);
             }
-            if (isset($data['categoryId'])) {
-                $category = $this->categoryRepository->find($data['categoryId']);
-                $product->setCategory($category);
+            $product->setTrackStock(isset($data['trackStock']));
+            if (isset($data['weight'])) {
+                $product->setWeight($data['weight'] ? $data['weight'] : null);
+            }
+            
+            // Handle dimensions
+            if (isset($data['dimensions'])) {
+                $dimensions = [];
+                if (!empty($data['dimensions']['length'])) {
+                    $dimensions['length'] = (float)$data['dimensions']['length'];
+                }
+                if (!empty($data['dimensions']['width'])) {
+                    $dimensions['width'] = (float)$data['dimensions']['width'];
+                }
+                if (!empty($data['dimensions']['height'])) {
+                    $dimensions['height'] = (float)$data['dimensions']['height'];
+                }
+                $product->setDimensions(!empty($dimensions) ? $dimensions : null);
+            }
+            
+            // Handle product type and status
+            if (isset($data['status'])) {
+                $product->setStatus($data['status']);
+            }
+            $product->setIsVariable(isset($data['isVariable']));
+            $product->setIsDigital(isset($data['isDigital']));
+            // Handle categories (Many-to-Many relationship)
+            if (isset($data['categoryIds']) && is_array($data['categoryIds'])) {
+                $product->getCategories()->clear();
+                foreach ($data['categoryIds'] as $categoryId) {
+                    if (!empty($categoryId)) {
+                        $category = $this->categoryRepository->find($categoryId);
+                        if ($category) {
+                            $product->addCategory($category);
+                        }
+                    }
+                }
             }
             if (isset($data['brandId'])) {
                 $brand = $this->brandRepository->find($data['brandId']);
@@ -289,6 +330,53 @@ class ProductController extends AbstractController
             }
 
             $this->entityManager->flush();
+
+            // Handle variants if product is variable
+            if ($product->isVariable() && isset($data['variants']) && is_array($data['variants'])) {
+                // Clear existing variants for clean update
+                foreach ($product->getVariants() as $existingVariant) {
+                    $this->entityManager->remove($existingVariant);
+                }
+                $this->entityManager->flush();
+                
+                // Add new variants
+                foreach ($data['variants'] as $variantData) {
+                    if (!empty($variantData['sku'])) {
+                        $variant = new ProductVariant();
+                        $variant->setProduct($product);
+                        $variant->setSku($variantData['sku']);
+                        
+                        if (!empty($variantData['price'])) {
+                            $variant->setPrice($variantData['price']);
+                        }
+                        if (!empty($variantData['compareAtPrice'])) {
+                            $variant->setCompareAtPrice($variantData['compareAtPrice']);
+                        }
+                        if (!empty($variantData['costPrice'])) {
+                            $variant->setCostPrice($variantData['costPrice']);
+                        }
+                        if (isset($variantData['stock'])) {
+                            $variant->setStock((int)$variantData['stock']);
+                        }
+                        if (isset($variantData['lowStockThreshold'])) {
+                            $variant->setLowStockThreshold($variantData['lowStockThreshold'] ? (int)$variantData['lowStockThreshold'] : null);
+                        }
+                        if (!empty($variantData['weight'])) {
+                            $variant->setWeight($variantData['weight']);
+                        }
+                        if (isset($variantData['sortOrder'])) {
+                            $variant->setSortOrder((int)$variantData['sortOrder']);
+                        }
+                        
+                        $variant->setTrackStock(isset($variantData['trackStock']));
+                        $variant->setIsActive(isset($variantData['isActive']));
+                        
+                        $this->entityManager->persist($variant);
+                    }
+                }
+                
+                $this->entityManager->flush();
+            }
 
             $this->addFlash('success', $isNew ? 'Produit créé avec succès.' : 'Produit modifié avec succès.');
             return $this->redirectToRoute('admin_product_show', ['id' => $product->getId()]);

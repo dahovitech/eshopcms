@@ -49,12 +49,47 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="price" class="form-label">Prix de base (€) *</label>
+                                <label for="status" class="form-label">Statut *</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="draft" {{ product.status == 'draft' ? 'selected' : '' }}>Brouillon</option>
+                                    <option value="active" {{ product.status == 'active' ? 'selected' : '' }}>Actif</option>
+                                    <option value="inactive" {{ product.status == 'inactive' ? 'selected' : '' }}>Inactif</option>
+                                    <option value="archived" {{ product.status == 'archived' ? 'selected' : '' }}>Archivé</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prix Section -->
+                    <h6 class="mb-3"><i class="bi bi-currency-euro me-2"></i>Prix</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Prix de vente (€) *</label>
                                 <input type="number" step="0.01" class="form-control" id="price" name="price" 
                                        value="{{ product.price }}" required>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="compareAtPrice" class="form-label">Prix de comparaison (€)</label>
+                                <input type="number" step="0.01" class="form-control" id="compareAtPrice" name="compareAtPrice" 
+                                       value="{{ product.compareAtPrice }}">
+                                <div class="form-text">Prix barré (doit être > prix de vente)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="costPrice" class="form-label">Prix de revient (€)</label>
+                                <input type="number" step="0.01" class="form-control" id="costPrice" name="costPrice" 
+                                       value="{{ product.costPrice }}">
+                                <div class="form-text">Pour calcul de marge</div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Stock Section -->
+                    <h6 class="mb-3"><i class="bi bi-boxes me-2"></i>Gestion du stock</h6>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
@@ -65,16 +100,64 @@
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="weight" class="form-label">Poids (kg)</label>
-                                <input type="number" step="0.01" class="form-control" id="weight" name="weight" 
-                                       value="{{ product.weight }}" min="0">
+                                <label for="lowStockThreshold" class="form-label">Seuil de stock faible</label>
+                                <input type="number" class="form-control" id="lowStockThreshold" name="lowStockThreshold" 
+                                       value="{{ product.lowStockThreshold }}" min="0">
+                                <div class="form-text">Alerte en dessous de ce niveau</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="categoryId" class="form-label">Catégorie</label>
-                                <select class="form-select" id="categoryId" name="categoryId">
-                                    <option value="">Sélectionner une catégorie</option>
+                                <label class="form-label">Options stock</label>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="trackStock" name="trackStock" 
+                                           {{ product.trackStock ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="trackStock">Suivre le stock</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Properties -->
+                    <h6 class="mb-3"><i class="bi bi-rulers me-2"></i>Propriétés physiques</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="weight" class="form-label">Poids (kg)</label>
+                                <input type="number" step="0.001" class="form-control" id="weight" name="weight" 
+                                       value="{{ product.weight }}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="dimensions_length" class="form-label">Longueur (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="dimensions_length" name="dimensions[length]" 
+                                       value="{{ product.dimensions.length ?? '' }}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="dimensions_width" class="form-label">Largeur (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="dimensions_width" name="dimensions[width]" 
+                                       value="{{ product.dimensions.width ?? '' }}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="dimensions_height" class="form-label">Hauteur (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="dimensions_height" name="dimensions[height]" 
+                                       value="{{ product.dimensions.height ?? '' }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories and Brand -->
+                    <h6 class="mb-3"><i class="bi bi-tags me-2"></i>Classification</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryIds" class="form-label">Catégories</label>
+                                <select class="form-select" id="categoryIds" name="categoryIds[]" multiple>
                                     {% for category in categories %}
                                     {% set isSelected = false %}
                                     {% for productCategory in product.categories %}
@@ -87,10 +170,9 @@
                                     </option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text">Maintenez Ctrl/Cmd pour sélectionner plusieurs catégories</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="brandId" class="form-label">Marque</label>
@@ -105,16 +187,32 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+
+                    <!-- Product Type Options -->
+                    <h6 class="mb-3"><i class="bi bi-gear me-2"></i>Type de produit</h6>
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Options</label>
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="isActive" name="isActive" 
-                                           {{ product.isActive ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="isActive">Produit actif</label>
+                                    <input type="checkbox" class="form-check-input" id="isVariable" name="isVariable" 
+                                           {{ product.isVariable ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="isVariable">Produit variable</label>
+                                    <div class="form-text">Ce produit a des variations (taille, couleur, etc.)</div>
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="isDigital" name="isDigital" 
+                                           {{ product.isDigital ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="isDigital">Produit numérique</label>
+                                    <div class="form-text">Ebook, logiciel, service en ligne, etc.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4"></div>
                     </div>
                 </div>
             </div>
@@ -214,6 +312,80 @@
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Product Variations (only if product is variable) -->
+            {% if product.isVariable %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>Variations du produit
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="productVariants">
+                        {% for variant in product.variants %}
+                        <div class="card border-secondary mb-3 variant-card" data-variant-index="{{ loop.index0 }}">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Variation {{ loop.index }} - {{ variant.sku ?? 'Nouveau' }}</h6>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="variant_{{ loop.index0 }}_sku" class="form-label">SKU</label>
+                                            <input type="text" class="form-control" id="variant_{{ loop.index0 }}_sku" 
+                                                   name="variants[{{ loop.index0 }}][sku]" value="{{ variant.sku }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="variant_{{ loop.index0 }}_price" class="form-label">Prix (€)</label>
+                                            <input type="number" step="0.01" class="form-control" id="variant_{{ loop.index0 }}_price" 
+                                                   name="variants[{{ loop.index0 }}][price]" value="{{ variant.price }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="variant_{{ loop.index0 }}_stock" class="form-label">Stock</label>
+                                            <input type="number" class="form-control" id="variant_{{ loop.index0 }}_stock" 
+                                                   name="variants[{{ loop.index0 }}][stock]" value="{{ variant.stock }}" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="variant_{{ loop.index0 }}_isActive" 
+                                                   name="variants[{{ loop.index0 }}][isActive]" {{ variant.isActive ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="variant_{{ loop.index0 }}_isActive">Variation active</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="variant_{{ loop.index0 }}_sortOrder" class="form-label">Ordre d'affichage</label>
+                                            <input type="number" class="form-control" id="variant_{{ loop.index0 }}_sortOrder" 
+                                                   name="variants[{{ loop.index0 }}][sortOrder]" value="{{ variant.sortOrder }}" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Ce produit n'a pas encore de variations. Cliquez sur "Ajouter une variation" pour commencer.
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" onclick="addVariant()">
+                        <i class="bi bi-plus me-1"></i>Ajouter une variation
+                    </button>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="col-md-4">
@@ -382,5 +554,89 @@ function removeAdditionalImage(button) {
     const imageItem = button.closest('.additional-image-item');
     imageItem.remove();
 }
+
+// Product Variants Management
+let variantIndex = {{ product.variants|length }};
+
+function addVariant() {
+    const container = document.getElementById('productVariants');
+    const newVariantHtml = `
+        <div class="card border-secondary mb-3 variant-card" data-variant-index="${variantIndex}">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Variation ${variantIndex + 1} - Nouveau</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="variant_${variantIndex}_sku" class="form-label">SKU</label>
+                            <input type="text" class="form-control" id="variant_${variantIndex}_sku" 
+                                   name="variants[${variantIndex}][sku]" value="" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="variant_${variantIndex}_price" class="form-label">Prix (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="variant_${variantIndex}_price" 
+                                   name="variants[${variantIndex}][price]" value="">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="variant_${variantIndex}_stock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="variant_${variantIndex}_stock" 
+                                   name="variants[${variantIndex}][stock]" value="0" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="variant_${variantIndex}_isActive" 
+                                   name="variants[${variantIndex}][isActive]" checked>
+                            <label class="form-check-label" for="variant_${variantIndex}_isActive">Variation active</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="variant_${variantIndex}_sortOrder" class="form-label">Ordre d'affichage</label>
+                            <input type="number" class="form-control" id="variant_${variantIndex}_sortOrder" 
+                                   name="variants[${variantIndex}][sortOrder]" value="${variantIndex}" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', newVariantHtml);
+    variantIndex++;
+}
+
+function removeVariant(button) {
+    const variantCard = button.closest('.variant-card');
+    variantCard.remove();
+}
+
+// Toggle variants section based on isVariable checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const isVariableCheckbox = document.getElementById('isVariable');
+    const variantsSection = document.querySelector('.card:has(#productVariants)');
+    
+    if (isVariableCheckbox && variantsSection) {
+        function toggleVariantsSection() {
+            if (isVariableCheckbox.checked) {
+                variantsSection.style.display = 'block';
+            } else {
+                variantsSection.style.display = 'none';
+            }
+        }
+        
+        isVariableCheckbox.addEventListener('change', toggleVariantsSection);
+        toggleVariantsSection(); // Initialize on page load
+    }
+});
 </script>
 {% endblock %}
