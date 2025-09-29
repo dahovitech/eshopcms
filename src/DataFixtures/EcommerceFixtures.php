@@ -42,25 +42,15 @@ class EcommerceFixtures extends Fixture
 
     private function createLanguages(ObjectManager $manager): array
     {
-        $languagesData = [
-            ['fr', 'Français', 'Français', true, true, 0],
-            ['en', 'English', 'English', true, false, 1],
-            ['es', 'Español', 'Español', true, false, 2],
-            ['de', 'Deutsch', 'Deutsch', true, false, 3]
-        ];
-
+        // Get existing languages created by AppFixtures instead of creating new ones
+        $languageCodes = ['fr', 'en', 'es', 'de'];
         $languages = [];
-        foreach ($languagesData as [$code, $name, $nativeName, $isActive, $isDefault, $sortOrder]) {
-            $language = new Language();
-            $language->setCode($code);
-            $language->setName($name);
-            $language->setNativeName($nativeName);
-            $language->setIsActive($isActive);
-            $language->setIsDefault($isDefault);
-            $language->setSortOrder($sortOrder);
-            
-            $manager->persist($language);
-            $languages[$code] = $language;
+        
+        foreach ($languageCodes as $code) {
+            $language = $manager->getRepository(Language::class)->findOneBy(['code' => $code]);
+            if ($language) {
+                $languages[$code] = $language;
+            }
         }
 
         return $languages;

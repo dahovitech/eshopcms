@@ -17,7 +17,7 @@ class UserFixtures extends Fixture
     {
         // Create Super Admin
         $superAdmin = new User();
-        $superAdmin->setEmail('superadmin@eshocms.local');
+        $superAdmin->setEmail('superadmin@eshopcms.local');
         $superAdmin->setFirstName('Super');
         $superAdmin->setLastName('Admin');
         $superAdmin->setRoles(['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_USER']);
@@ -27,7 +27,7 @@ class UserFixtures extends Fixture
 
         // Create Admin
         $admin = new User();
-        $admin->setEmail('admin@eshocms.local');
+        $admin->setEmail('admin@eshopcms.local');
         $admin->setFirstName('John');
         $admin->setLastName('Admin');
         $admin->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
