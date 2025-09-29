@@ -329,8 +329,13 @@ function selectIcon(iconClass, iconLabel) {
 }
 
 function loadBootstrapIcons(searchTerm = '') {
-    fetch('/admin/category/bootstrap-icons')
-        .then(response => response.json())
+    fetch('{{ path('admin_category_bootstrap_icons') }}')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(icons => {
             const grid = document.getElementById('iconLibraryGrid');
             const empty = document.getElementById('iconLibraryEmpty');
