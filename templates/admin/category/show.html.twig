@@ -41,7 +41,7 @@
                             <dt class="col-sm-5">Catégorie parent:</dt>
                             <dd class="col-sm-7">
                                 {% if category.parent %}
-                                <span class="badge bg-secondary">{{ category.parent.getName() }}</span>
+                                <span class="badge bg-secondary">{{ category.parent.getName(app.request.locale, 'fr') }}</span>
                                 {% else %}
                                 <span class="text-muted">Catégorie racine</span>
                                 {% endif %}

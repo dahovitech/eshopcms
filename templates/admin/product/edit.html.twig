@@ -99,7 +99,7 @@
                                     {% for brand in brands %}
                                     <option value="{{ brand.id }}" 
                                             {{ product.brand and product.brand.id == brand.id ? 'selected' : '' }}>
-                                        {{ brand.getName() }}
+                                        {{ brand.getName(app.request.locale, 'fr') }}
                                     </option>
                                     {% endfor %}
                                 </select>

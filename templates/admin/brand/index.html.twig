@@ -41,7 +41,7 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-tag-fill text-primary me-2"></i>
                                 <div>
-                                    <strong>{{ brand.getName() }}</strong>
+                                    <strong>{{ brand.getName(app.request.locale, 'fr') }}</strong>
                                     {% if brand.getDescription() %}
                                     <br><small class="text-muted">{{ brand.getDescription()|slice(0, 60) }}{% if brand.getDescription()|length > 60 %}...{% endif %}</small>
                                     {% endif %}

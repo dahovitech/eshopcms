@@ -97,7 +97,7 @@
                             <dt class="col-sm-4">Marque:</dt>
                             <dd class="col-sm-8">
                                 {% if product.brand %}
-                                <span class="badge bg-info">{{ product.brand.getName() }}</span>
+                                <span class="badge bg-info">{{ product.brand.getName(app.request.locale, 'fr') }}</span>
                                 {% else %}
                                 <span class="text-muted">Aucune</span>
                                 {% endif %}

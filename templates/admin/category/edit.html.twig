@@ -41,7 +41,7 @@
                                         {% if parent.id != category.id %}
                                         <option value="{{ parent.id }}" 
                                                 {{ category.parent and category.parent.id == parent.id ? 'selected' : '' }}>
-                                            {{ parent.getName() }}
+                                            {{ parent.getName(app.request.locale, 'fr') }}
                                         </option>
                                         {% endif %}
                                     {% endfor %}

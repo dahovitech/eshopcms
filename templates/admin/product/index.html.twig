@@ -125,7 +125,7 @@
                                 <div>
                                     <strong>{{ product.getName(app.request.locale, 'fr') ?? 'Sans nom' }}</strong>
                                     {% if product.brand %}
-                                    <br><small class="text-muted">{{ product.brand.getName() }}</small>
+                                    <br><small class="text-muted">{{ product.brand.getName(app.request.locale, 'fr') }}</small>
                                     {% endif %}
                                 </div>
                             </div>

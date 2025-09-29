@@ -1,17 +1,17 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ brand.getName() ?? 'Marque' }} - Administration{% endblock %}
+{% block title %}{{ brand.getName(app.request.locale, 'fr') ?? 'Marque' }} - Administration{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 mb-0">
-            <i class="bi bi-tag me-2"></i>{{ brand.getName() ?? 'Marque Sans Nom' }}
+            <i class="bi bi-tag me-2"></i>{{ brand.getName(app.request.locale, 'fr') ?? 'Marque Sans Nom' }}
         </h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ path('admin_brand_index') }}">Marques</a></li>
-                <li class="breadcrumb-item active">{{ brand.getName() ?? 'Sans nom' }}</li>
+                <li class="breadcrumb-item active">{{ brand.getName(app.request.locale, 'fr') ?? 'Sans nom' }}</li>
             </ol>
         </nav>
     </div>

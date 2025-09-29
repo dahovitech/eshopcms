@@ -133,7 +133,7 @@
                         </td>
                         <td>
                             {% if category.parent %}
-                            <span class="badge bg-secondary">{{ category.parent.getName() }}</span>
+                            <span class="badge bg-secondary">{{ category.parent.getName(app.request.locale, 'fr') }}</span>
                             {% else %}
                             <span class="text-muted">Racine</span>
                             {% endif %}
